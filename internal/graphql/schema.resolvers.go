@@ -140,10 +140,43 @@ func (r *queryResolver) TorrentPeers(ctx context.Context, id string) ([]*Peer, e
 	return MapPeers(peers), nil
 }
 
+// subOutBuffer absorbs brief GraphQL client stalls. When full, sendSub drops the
+// oldest value so this goroutine keeps draining the EventBus channel — a blocked
+// send would fill the bus buffer and drop unrelated events (e.g. torrent_removed).
+const subOutBuffer = 16
+
+// sendSub delivers v without blocking on a slow consumer. Returns false when
+// ctx is already cancelled and the caller should exit. If the buffer is full,
+// the oldest value is dropped so this goroutine can keep draining EventBus.
+func sendSub[T any](ctx context.Context, out chan T, v T) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	select {
+	case out <- v:
+		return true
+	default:
+	}
+	// Drop oldest to make room (same freshness preference as EventBus.Publish).
+	select {
+	case <-out:
+	default:
+	}
+	if ctx.Err() != nil {
+		return false
+	}
+	select {
+	case out <- v:
+	default:
+		// Still full (racing with another send or consumer); skip this value.
+	}
+	return true
+}
+
 // TorrentAdded implements subscription resolver
 func (r *subscriptionResolver) TorrentAdded(ctx context.Context) (<-chan *Torrent, error) {
 	subID, eventChan := r.manager.EventBus().Subscribe()
-	out := make(chan *Torrent)
+	out := make(chan *Torrent, subOutBuffer)
 
 	go func() {
 		defer r.manager.EventBus().Unsubscribe(subID)
@@ -158,9 +191,7 @@ func (r *subscriptionResolver) TorrentAdded(ctx context.Context) (<-chan *Torren
 					return
 				}
 				if event.Type == session.EventTorrentAdded && event.Torrent != nil {
-					select {
-					case out <- MapTorrent(event.Torrent):
-					case <-ctx.Done():
+					if !sendSub(ctx, out, MapTorrent(event.Torrent)) {
 						return
 					}
 				}
@@ -174,7 +205,7 @@ func (r *subscriptionResolver) TorrentAdded(ctx context.Context) (<-chan *Torren
 // TorrentRemoved implements subscription resolver
 func (r *subscriptionResolver) TorrentRemoved(ctx context.Context) (<-chan string, error) {
 	subID, eventChan := r.manager.EventBus().Subscribe()
-	out := make(chan string)
+	out := make(chan string, subOutBuffer)
 
 	go func() {
 		defer r.manager.EventBus().Unsubscribe(subID)
@@ -189,9 +220,7 @@ func (r *subscriptionResolver) TorrentRemoved(ctx context.Context) (<-chan strin
 					return
 				}
 				if event.Type == session.EventTorrentRemoved {
-					select {
-					case out <- event.ID:
-					case <-ctx.Done():
+					if !sendSub(ctx, out, event.ID) {
 						return
 					}
 				}
@@ -205,7 +234,7 @@ func (r *subscriptionResolver) TorrentRemoved(ctx context.Context) (<-chan strin
 // TorrentUpdated implements subscription resolver
 func (r *subscriptionResolver) TorrentUpdated(ctx context.Context, id *string) (<-chan *Torrent, error) {
 	subID, eventChan := r.manager.EventBus().Subscribe()
-	out := make(chan *Torrent)
+	out := make(chan *Torrent, subOutBuffer)
 
 	go func() {
 		defer r.manager.EventBus().Unsubscribe(subID)
@@ -225,9 +254,7 @@ func (r *subscriptionResolver) TorrentUpdated(ctx context.Context, id *string) (
 						continue
 					}
 
-					select {
-					case out <- MapTorrent(event.Torrent):
-					case <-ctx.Done():
+					if !sendSub(ctx, out, MapTorrent(event.Torrent)) {
 						return
 					}
 				}
@@ -241,7 +268,7 @@ func (r *subscriptionResolver) TorrentUpdated(ctx context.Context, id *string) (
 // StatsUpdated implements subscription resolver
 func (r *subscriptionResolver) StatsUpdated(ctx context.Context) (<-chan *SessionStats, error) {
 	subID, eventChan := r.manager.EventBus().Subscribe()
-	out := make(chan *SessionStats)
+	out := make(chan *SessionStats, subOutBuffer)
 
 	go func() {
 		defer r.manager.EventBus().Unsubscribe(subID)
@@ -256,9 +283,7 @@ func (r *subscriptionResolver) StatsUpdated(ctx context.Context) (<-chan *Sessio
 					return
 				}
 				if event.Type == session.EventStatsUpdated && event.Stats != nil {
-					select {
-					case out <- MapSessionStats(event.Stats):
-					case <-ctx.Done():
+					if !sendSub(ctx, out, MapSessionStats(event.Stats)) {
 						return
 					}
 				}
