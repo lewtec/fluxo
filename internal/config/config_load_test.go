@@ -34,9 +34,6 @@ func TestLoadKeepsDefaultPaths(t *testing.T) {
 
 	wantDB := filepath.Join(home, ".fluxo", "session.db")
 	wantData := filepath.Join(home, ".fluxo", "downloads")
-	// DefaultConfig uses string concat not Join — keep same form
-	wantDB = home + "/.fluxo/session.db"
-	wantData = home + "/.fluxo/downloads"
 
 	if cfg.Torrent.Database != wantDB {
 		t.Errorf("Database = %q, want %q", cfg.Torrent.Database, wantDB)
