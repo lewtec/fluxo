@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/cenkalti/rain/torrent"
@@ -59,8 +60,8 @@ func DefaultConfig() *Config {
 		DevProxy:      "http://localhost:5173",
 		WatchInterval: 1 * time.Second,
 		Torrent: TorrentConfig{
-			Database:                 homeDir + "/.fluxo/session.db",
-			DataDir:                  homeDir + "/.fluxo/downloads",
+			Database:                 filepath.Join(homeDir, ".fluxo", "session.db"),
+			DataDir:                  filepath.Join(homeDir, ".fluxo", "downloads"),
 			DataDirIncludesTorrentID: false,
 			PortBegin:                50000,
 			PortEnd:                  60000,
