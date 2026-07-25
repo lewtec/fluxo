@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -30,7 +31,12 @@ import (
 type HTTPListener struct {
 	config  *config.Config
 	manager *session.Manager
-	server  *http.Server
+
+	// mu guards server. Start publishes the *http.Server under lock before
+	// ListenAndServe; Stop reads it under lock so a concurrent graceful
+	// shutdown cannot race with the write (detected by go test -race).
+	mu     sync.Mutex
+	server *http.Server
 }
 
 // NewHTTPListener creates a new HTTP listener
@@ -114,7 +120,7 @@ func (l *HTTPListener) Start(ctx context.Context) error {
 
 	// Create server
 	addr := fmt.Sprintf("%s:%d", l.config.APIHost, l.config.APIPort)
-	l.server = &http.Server{
+	srv := &http.Server{
 		Addr:         addr,
 		Handler:      l.withMiddleware(mux),
 		ReadTimeout:  30 * time.Second,
@@ -122,10 +128,14 @@ func (l *HTTPListener) Start(ctx context.Context) error {
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 	}
 
+	l.mu.Lock()
+	l.server = srv
+	l.mu.Unlock()
+
 	log.Printf("Starting HTTP server on %s", addr)
 
-	// Start server
-	if err := l.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	// Serve via local reference so we do not re-read l.server without the lock.
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("HTTP server error: %w", err)
 	}
 
@@ -134,10 +144,13 @@ func (l *HTTPListener) Start(ctx context.Context) error {
 
 // Stop stops the HTTP server
 func (l *HTTPListener) Stop(ctx context.Context) error {
-	if l.server == nil {
+	l.mu.Lock()
+	srv := l.server
+	l.mu.Unlock()
+	if srv == nil {
 		return nil
 	}
-	return l.server.Shutdown(ctx)
+	return srv.Shutdown(ctx)
 }
 
 func (l *HTTPListener) createSchema(resolver *graphql.Resolver) *handler.Server {
