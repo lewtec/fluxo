@@ -118,14 +118,17 @@ func (l *HTTPListener) Start(ctx context.Context) error {
 		})
 	}
 
-	// Create server
+	// Create server.
+	// GraphQL subscriptions use long-lived WebSockets with keepalive pings.
+	// A WriteTimeout would abort those connections mid-stream; leave it zero.
+	// Prefer ReadHeaderTimeout over ReadTimeout so slowloris protection does
+	// not apply a read deadline to the whole hijacked WebSocket lifetime.
 	addr := fmt.Sprintf("%s:%d", l.config.APIHost, l.config.APIPort)
 	srv := &http.Server{
-		Addr:         addr,
-		Handler:      l.withMiddleware(mux),
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		BaseContext:  func(net.Listener) context.Context { return ctx },
+		Addr:              addr,
+		Handler:           l.withMiddleware(mux),
+		ReadHeaderTimeout: 10 * time.Second,
+		BaseContext:       func(net.Listener) context.Context { return ctx },
 	}
 
 	l.mu.Lock()
