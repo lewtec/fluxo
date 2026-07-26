@@ -173,13 +173,19 @@ func sendSub[T any](ctx context.Context, out chan T, v T) bool {
 	return true
 }
 
-// TorrentAdded implements subscription resolver
-func (r *subscriptionResolver) TorrentAdded(ctx context.Context) (<-chan *Torrent, error) {
-	subID, eventChan := r.manager.EventBus().Subscribe()
-	out := make(chan *Torrent, subOutBuffer)
+// subscribeFilter wires EventBus → buffered out channel. match returns
+// (value, true) to emit an event and false to skip. The out channel is closed
+// when ctx is cancelled or the bus subscription ends.
+func subscribeFilter[T any](
+	ctx context.Context,
+	bus *session.EventBus,
+	match func(session.Event) (T, bool),
+) <-chan T {
+	subID, eventChan := bus.Subscribe()
+	out := make(chan T, subOutBuffer)
 
 	go func() {
-		defer r.manager.EventBus().Unsubscribe(subID)
+		defer bus.Unsubscribe(subID)
 		defer close(out)
 
 		for {
@@ -190,108 +196,61 @@ func (r *subscriptionResolver) TorrentAdded(ctx context.Context) (<-chan *Torren
 				if !ok {
 					return
 				}
-				if event.Type == session.EventTorrentAdded && event.Torrent != nil {
-					if !sendSub(ctx, out, MapTorrent(event.Torrent)) {
-						return
-					}
+				v, ok := match(event)
+				if !ok {
+					continue
+				}
+				if !sendSub(ctx, out, v) {
+					return
 				}
 			}
 		}
 	}()
 
-	return out, nil
+	return out
+}
+
+// TorrentAdded implements subscription resolver
+func (r *subscriptionResolver) TorrentAdded(ctx context.Context) (<-chan *Torrent, error) {
+	return subscribeFilter(ctx, r.manager.EventBus(), func(event session.Event) (*Torrent, bool) {
+		if event.Type != session.EventTorrentAdded || event.Torrent == nil {
+			return nil, false
+		}
+		return MapTorrent(event.Torrent), true
+	}), nil
 }
 
 // TorrentRemoved implements subscription resolver
 func (r *subscriptionResolver) TorrentRemoved(ctx context.Context) (<-chan string, error) {
-	subID, eventChan := r.manager.EventBus().Subscribe()
-	out := make(chan string, subOutBuffer)
-
-	go func() {
-		defer r.manager.EventBus().Unsubscribe(subID)
-		defer close(out)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event, ok := <-eventChan:
-				if !ok {
-					return
-				}
-				if event.Type == session.EventTorrentRemoved {
-					if !sendSub(ctx, out, event.ID) {
-						return
-					}
-				}
-			}
+	return subscribeFilter(ctx, r.manager.EventBus(), func(event session.Event) (string, bool) {
+		if event.Type != session.EventTorrentRemoved {
+			return "", false
 		}
-	}()
-
-	return out, nil
+		return event.ID, true
+	}), nil
 }
 
 // TorrentUpdated implements subscription resolver
 func (r *subscriptionResolver) TorrentUpdated(ctx context.Context, id *string) (<-chan *Torrent, error) {
-	subID, eventChan := r.manager.EventBus().Subscribe()
-	out := make(chan *Torrent, subOutBuffer)
-
-	go func() {
-		defer r.manager.EventBus().Unsubscribe(subID)
-		defer close(out)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event, ok := <-eventChan:
-				if !ok {
-					return
-				}
-				if event.Type == session.EventTorrentUpdated && event.Torrent != nil {
-					// Filter by ID if specified
-					if id != nil && event.Torrent.ID() != *id {
-						continue
-					}
-
-					if !sendSub(ctx, out, MapTorrent(event.Torrent)) {
-						return
-					}
-				}
-			}
+	return subscribeFilter(ctx, r.manager.EventBus(), func(event session.Event) (*Torrent, bool) {
+		if event.Type != session.EventTorrentUpdated || event.Torrent == nil {
+			return nil, false
 		}
-	}()
-
-	return out, nil
+		if id != nil && event.Torrent.ID() != *id {
+			return nil, false
+		}
+		return MapTorrent(event.Torrent), true
+	}), nil
 }
 
 // StatsUpdated implements subscription resolver
 func (r *subscriptionResolver) StatsUpdated(ctx context.Context) (<-chan *SessionStats, error) {
-	subID, eventChan := r.manager.EventBus().Subscribe()
-	out := make(chan *SessionStats, subOutBuffer)
-
-	go func() {
-		defer r.manager.EventBus().Unsubscribe(subID)
-		defer close(out)
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case event, ok := <-eventChan:
-				if !ok {
-					return
-				}
-				if event.Type == session.EventStatsUpdated && event.Stats != nil {
-					if !sendSub(ctx, out, MapSessionStats(event.Stats)) {
-						return
-					}
-				}
-			}
+	return subscribeFilter(ctx, r.manager.EventBus(), func(event session.Event) (*SessionStats, bool) {
+		if event.Type != session.EventStatsUpdated || event.Stats == nil {
+			return nil, false
 		}
-	}()
-
-	return out, nil
+		return MapSessionStats(event.Stats), true
+	}), nil
 }
 
 // Mutation returns MutationResolver implementation.
