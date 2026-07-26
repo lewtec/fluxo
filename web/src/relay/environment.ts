@@ -34,6 +34,14 @@ async function fetchQuery(
     }),
   })
 
+  // Non-OK bodies are often HTML/proxy errors, not GraphQL JSON. Fail clearly
+  // instead of throwing an opaque JSON parse error or a mangled payload.
+  if (!response.ok) {
+    throw new Error(
+      `GraphQL HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`,
+    )
+  }
+
   return await response.json()
 }
 
