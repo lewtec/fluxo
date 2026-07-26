@@ -23,6 +23,9 @@ func New(cfg torrent.Config) (*Manager, error) {
 	eb := NewEventBus()
 	upnp := NewUPNPManager(eb)
 	upnp.Start()
+	// Rain resumes previously-started torrents inside NewSession without
+	// going through StartTorrent, so publish no EventTorrentStarted for them.
+	upnp.MapExisting(session.ListTorrents())
 
 	return &Manager{
 		session:     session,
@@ -47,6 +50,10 @@ func (m *Manager) AddTorrent(uri string, opts *torrent.AddTorrentOptions) (*torr
 		return nil, fmt.Errorf("%w: empty URI", ErrInvalidURI)
 	}
 
+	// Rain auto-starts when Stopped is false (default). That path never calls
+	// StartTorrent, so we must emit EventTorrentStarted for UPnP (and peers).
+	autoStarted := opts == nil || !opts.Stopped
+
 	t, err := m.session.AddURI(uri, opts)
 	if err != nil {
 		// Wrap URI parsing errors
@@ -58,6 +65,12 @@ func (m *Manager) AddTorrent(uri string, opts *torrent.AddTorrentOptions) (*torr
 		Type:    EventTorrentAdded,
 		Torrent: t,
 	})
+	if autoStarted {
+		m.eventBus.Publish(Event{
+			Type:    EventTorrentStarted,
+			Torrent: t,
+		})
+	}
 
 	return t, nil
 }

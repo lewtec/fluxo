@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cenkalti/rain/torrent"
 	"github.com/huin/goupnp"
 	"github.com/huin/goupnp/dcps/internetgateway2"
 )
@@ -144,6 +145,29 @@ func (m *UPNPManager) handleEvent(event Event) {
 		if event.Torrent != nil {
 			go m.removeMappingForTorrent(event.Torrent.ID())
 		}
+	case EventTorrentRemoved:
+		// RemoveTorrent closes the torrent without EventTorrentStopped.
+		if event.ID != "" {
+			go m.removeMappingForTorrent(event.ID)
+		}
+	}
+}
+
+// torrentWantsPortMap reports whether a torrent status should have an external
+// port mapping (anything actively using the listen port).
+func torrentWantsPortMap(st torrent.Status) bool {
+	return st != torrent.Stopped && st != torrent.Stopping
+}
+
+// MapExisting maps listen ports for torrents already running (e.g. after
+// ResumeOnStartup). EventTorrentStarted is not published for those.
+func (m *UPNPManager) MapExisting(torrents []*torrent.Torrent) {
+	for _, t := range torrents {
+		if t == nil || !torrentWantsPortMap(t.Stats().Status) {
+			continue
+		}
+		id, port := t.ID(), t.Port()
+		go m.addMappingForTorrent(id, port)
 	}
 }
 
