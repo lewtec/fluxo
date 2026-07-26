@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -138,7 +139,7 @@ func (l *HTTPListener) Start(ctx context.Context) error {
 	log.Printf("Starting HTTP server on %s", addr)
 
 	// Serve via local reference so we do not re-read l.server without the lock.
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("HTTP server error: %w", err)
 	}
 
