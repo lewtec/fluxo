@@ -124,11 +124,14 @@ func (l *HTTPListener) Start(ctx context.Context) error {
 	// A WriteTimeout would abort those connections mid-stream; leave it zero.
 	// Prefer ReadHeaderTimeout over ReadTimeout so slowloris protection does
 	// not apply a read deadline to the whole hijacked WebSocket lifetime.
+	// IdleTimeout reaps keep-alive HTTP connections that go quiet; hijacked
+	// WebSocket connections are not subject to it after the upgrade.
 	addr := fmt.Sprintf("%s:%d", l.config.APIHost, l.config.APIPort)
 	srv := &http.Server{
 		Addr:              addr,
 		Handler:           l.withMiddleware(mux),
 		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       60 * time.Second,
 		BaseContext:       func(net.Listener) context.Context { return ctx },
 	}
 
