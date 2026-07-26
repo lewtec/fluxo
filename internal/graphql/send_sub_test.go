@@ -3,6 +3,9 @@ package graphql
 import (
 	"context"
 	"testing"
+	"time"
+
+	"github.com/lucasew/fluxo/internal/session"
 )
 
 func TestSendSubDeliversWhenRoom(t *testing.T) {
@@ -62,5 +65,65 @@ func TestSendSubReturnsFalseWhenCancelled(t *testing.T) {
 	case <-out:
 		t.Fatal("expected no value delivered after cancel")
 	default:
+	}
+}
+
+func TestSubscribeFilterMatchesAndSkips(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	bus := session.NewEventBus()
+	defer bus.Close()
+
+	out := subscribeFilter(ctx, bus, func(event session.Event) (string, bool) {
+		if event.Type != session.EventTorrentRemoved {
+			return "", false
+		}
+		return event.ID, true
+	})
+
+	bus.Publish(session.Event{Type: session.EventTorrentAdded, ID: "skip-me"})
+	bus.Publish(session.Event{Type: session.EventTorrentRemoved, ID: "t-removed"})
+
+	select {
+	case got := <-out:
+		if got != "t-removed" {
+			t.Fatalf("got %q want t-removed", got)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for matched event")
+	}
+
+	// Unmatched events must not leak a value.
+	select {
+	case got := <-out:
+		t.Fatalf("unexpected extra value %q", got)
+	case <-time.After(50 * time.Millisecond):
+	}
+}
+
+func TestSubscribeFilterStopsOnCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+
+	bus := session.NewEventBus()
+	defer bus.Close()
+
+	out := subscribeFilter(ctx, bus, func(event session.Event) (string, bool) {
+		return event.ID, true
+	})
+
+	cancel()
+
+	select {
+	case _, ok := <-out:
+		if ok {
+			// May or may not have a value; channel must close soon.
+			_, ok2 := <-out
+			if ok2 {
+				t.Fatal("expected out closed after cancel")
+			}
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for out to close after cancel")
 	}
 }
