@@ -23,12 +23,7 @@ func MapTorrent(t *torrent.Torrent) *Torrent {
 		errStr = &msg
 	}
 
-	// Get files and trackers from torrent methods.
-	// FileStats fails when the torrent is not running; keep an empty list so the rest of the map still works.
-	files, err := t.FileStats()
-	if err != nil {
-		files = nil
-	}
+	// Trackers/webseeds work regardless of run state; files need a fallback (see mapTorrentFiles).
 	trackers := t.Trackers()
 	webseeds := t.Webseeds()
 
@@ -53,12 +48,37 @@ func MapTorrent(t *torrent.Torrent) *Torrent {
 		PiecesAvailable: int(stats.Pieces.Available),
 		PieceLength:     int(stats.PieceLength),
 		Peers:           MapPeerStats(&stats.Peers),
-		Files:           MapFiles(files),
+		Files:           mapTorrentFiles(t, stats),
 		Trackers:        MapTrackers(trackers),
 		Webseeds:        MapWebseeds(webseeds),
 		Private:         stats.Private,
 		Error:           errStr,
 	}
+}
+
+// mapTorrentFiles prefers FileStats (per-file progress). Rain returns an error
+// from FileStats when the torrent is not running, so fall back to Files() for
+// path/length — otherwise stopped torrents show an empty file list in the UI.
+// When the torrent is fully complete, mark each file as fully downloaded;
+// otherwise BytesCompleted is unknown (0) without a running session.
+func mapTorrentFiles(t *torrent.Torrent, stats torrent.Stats) []*File {
+	fileStats, err := t.FileStats()
+	if err != nil {
+		raw, ferr := t.Files()
+		if ferr != nil {
+			return []*File{}
+		}
+		fileStats = make([]torrent.FileStats, len(raw))
+		fullyDone := stats.Bytes.Total > 0 && stats.Bytes.Completed >= stats.Bytes.Total
+		for i, f := range raw {
+			bc := int64(0)
+			if fullyDone {
+				bc = f.Length()
+			}
+			fileStats[i] = torrent.FileStats{File: f, BytesCompleted: bc}
+		}
+	}
+	return MapFiles(fileStats)
 }
 
 // MapTorrentStatus converts Rain status to GraphQL status
