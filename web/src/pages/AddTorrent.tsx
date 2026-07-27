@@ -102,41 +102,42 @@ export default function AddTorrent() {
         <div className="card-body">
             <h2 className="card-title mb-6">Add Torrent</h2>
 
-            <div role="tablist" className="tabs tabs-boxed mb-6">
-                <a
+            {/* DaisyUI 5: tabs-box (was tabs-boxed); buttons instead of bare anchors */}
+            <div role="tablist" className="tabs tabs-box mb-6">
+                <button
+                    type="button"
                     role="tab"
+                    aria-selected={activeTab === 'magnet'}
                     className={`tab ${activeTab === 'magnet' ? 'tab-active' : ''}`}
                     onClick={() => setActiveTab('magnet')}
                 >
                     <LinkIcon size={16} className="mr-2" /> Magnet Link
-                </a>
-                <a
+                </button>
+                <button
+                    type="button"
                     role="tab"
+                    aria-selected={activeTab === 'file'}
                     className={`tab ${activeTab === 'file' ? 'tab-active' : ''}`}
                     onClick={() => setActiveTab('file')}
                 >
                     <FileText size={16} className="mr-2" /> .torrent File
-                </a>
+                </button>
             </div>
 
             <form onSubmit={handleSubmit}>
                 {activeTab === 'magnet' ? (
-                    <div className="form-control w-full">
-                        <label className="label">
-                            <span className="label-text">Magnet URI</span>
-                        </label>
+                    <fieldset className="fieldset w-full">
+                        <legend className="fieldset-legend">Magnet URI</legend>
                         <textarea
-                            className="textarea textarea-bordered h-24 font-mono text-xs"
+                            className="textarea textarea-bordered h-24 font-mono text-xs w-full"
                             placeholder="magnet:?xt=urn:btih:..."
                             value={magnetUri}
                             onChange={(e) => setMagnetUri(e.target.value)}
-                        ></textarea>
-                    </div>
+                        />
+                    </fieldset>
                 ) : (
-                    <div className="form-control w-full">
-                        <label className="label">
-                            <span className="label-text">Upload .torrent file</span>
-                        </label>
+                    <fieldset className="fieldset w-full">
+                        <legend className="fieldset-legend">Upload .torrent file</legend>
                         <div className="border-2 border-dashed border-base-300 rounded-box p-8 text-center hover:bg-base-200 transition-colors cursor-pointer relative">
                             <input
                                 type="file"
@@ -149,7 +150,7 @@ export default function AddTorrent() {
                                 {file ? file.name : 'Click or drag file here'}
                             </p>
                         </div>
-                    </div>
+                    </fieldset>
                 )}
 
                 {error && (
@@ -161,9 +162,12 @@ export default function AddTorrent() {
                 <div className="card-actions justify-end mt-6">
                     <button
                         type="submit"
-                        className={`btn btn-primary ${isInFlight || isProcessing ? 'loading' : ''}`}
+                        className="btn btn-primary"
                         disabled={isInFlight || isProcessing}
                     >
+                        {(isInFlight || isProcessing) && (
+                            <span className="loading loading-spinner loading-sm" />
+                        )}
                         {(isInFlight || isProcessing) ? 'Adding...' : 'Add Torrent'}
                     </button>
                 </div>
