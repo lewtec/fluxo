@@ -38,6 +38,11 @@ type HTTPListener struct {
 	// shutdown cannot race with the write (detected by go test -race).
 	mu     sync.Mutex
 	server *http.Server
+
+	// devProxy is built once in Start when DevMode is on. Rebuilding
+	// httputil.ReverseProxy on every request re-parses the URL and
+	// reallocates transport state for no benefit (DevProxy is static).
+	devProxy *httputil.ReverseProxy
 }
 
 // NewHTTPListener creates a new HTTP listener
@@ -67,7 +72,11 @@ func (l *HTTPListener) Start(ctx context.Context) error {
 
 	// Static files (React app)
 	if l.config.DevMode {
-		// Proxy to Vite dev server in dev mode
+		target, err := url.Parse(l.config.DevProxy)
+		if err != nil {
+			return fmt.Errorf("invalid dev proxy URL %q: %w", l.config.DevProxy, err)
+		}
+		l.devProxy = httputil.NewSingleHostReverseProxy(target)
 		mux.HandleFunc("/", l.proxyToVite)
 	} else {
 		// Serve embedded files in production with SPA catch-all
@@ -231,12 +240,6 @@ func (l *HTTPListener) withMiddleware(handler http.Handler) http.Handler {
 }
 
 func (l *HTTPListener) proxyToVite(w http.ResponseWriter, r *http.Request) {
-	target, err := url.Parse(l.config.DevProxy)
-	if err != nil {
-		http.Error(w, "Invalid dev proxy URL", http.StatusInternalServerError)
-		return
-	}
-
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	proxy.ServeHTTP(w, r)
+	// Start always installs devProxy before ListenAndServe registers handlers.
+	l.devProxy.ServeHTTP(w, r)
 }
