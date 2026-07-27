@@ -1,4 +1,3 @@
-import { Suspense } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Layout from './Layout'
 import Home from './pages/Home'
