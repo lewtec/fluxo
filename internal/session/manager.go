@@ -1,6 +1,7 @@
 package session
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/cenkalti/rain/torrent"
@@ -13,7 +14,8 @@ type Manager struct {
 	upnpManager *UPNPManager
 }
 
-// New creates a new session manager
+// New creates a new session manager. Call Start to begin background services
+// (UPnP) with a request-scoped context from the caller.
 func New(cfg torrent.Config) (*Manager, error) {
 	session, err := torrent.NewSession(cfg)
 	if err != nil {
@@ -21,14 +23,16 @@ func New(cfg torrent.Config) (*Manager, error) {
 	}
 
 	eb := NewEventBus()
-	upnp := NewUPNPManager(eb)
-	upnp.Start()
-
 	return &Manager{
 		session:     session,
 		eventBus:    eb,
-		upnpManager: upnp,
+		upnpManager: NewUPNPManager(eb),
 	}, nil
+}
+
+// Start begins background services owned by the manager.
+func (m *Manager) Start(ctx context.Context) {
+	m.upnpManager.Start(ctx)
 }
 
 // Session returns the underlying Rain session
@@ -41,6 +45,15 @@ func (m *Manager) EventBus() *EventBus {
 	return m.eventBus
 }
 
+// torrentByID looks up a torrent or returns ErrTorrentNotFound.
+func (m *Manager) torrentByID(id string) (*torrent.Torrent, error) {
+	t := m.session.GetTorrent(id)
+	if t == nil {
+		return nil, fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
+	}
+	return t, nil
+}
+
 // AddTorrent adds a new torrent
 func (m *Manager) AddTorrent(uri string, opts *torrent.AddTorrentOptions) (*torrent.Torrent, error) {
 	if uri == "" {
@@ -50,7 +63,7 @@ func (m *Manager) AddTorrent(uri string, opts *torrent.AddTorrentOptions) (*torr
 	t, err := m.session.AddURI(uri, opts)
 	if err != nil {
 		// Wrap URI parsing errors
-		return nil, fmt.Errorf("%w: %v", ErrInvalidURI, err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidURI, err)
 	}
 
 	// Publish event
@@ -64,9 +77,8 @@ func (m *Manager) AddTorrent(uri string, opts *torrent.AddTorrentOptions) (*torr
 
 // RemoveTorrent removes a torrent
 func (m *Manager) RemoveTorrent(id string) error {
-	t := m.session.GetTorrent(id)
-	if t == nil {
-		return fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
+	if _, err := m.torrentByID(id); err != nil {
+		return err
 	}
 
 	if err := m.session.RemoveTorrent(id); err != nil {
@@ -84,11 +96,7 @@ func (m *Manager) RemoveTorrent(id string) error {
 
 // GetTorrent returns a torrent by ID
 func (m *Manager) GetTorrent(id string) (*torrent.Torrent, error) {
-	t := m.session.GetTorrent(id)
-	if t == nil {
-		return nil, fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
-	}
-	return t, nil
+	return m.torrentByID(id)
 }
 
 // GetTorrents returns all torrents
@@ -108,51 +116,62 @@ func (m *Manager) Close() error {
 	return m.session.Close()
 }
 
+// applyTorrent runs op on the torrent and publishes eventType on success.
+func (m *Manager) applyTorrent(id string, op func(*torrent.Torrent) error, eventType EventType) error {
+	t, err := m.torrentByID(id)
+	if err == nil {
+		err = op(t)
+	}
+	if err != nil {
+		return err
+	}
+	m.eventBus.Publish(Event{
+		Type:    eventType,
+		Torrent: t,
+	})
+	return nil
+}
+
+// forEachTorrent runs op on every torrent and publishes eventType on success.
+func (m *Manager) forEachTorrent(op func(*torrent.Torrent) error, eventType EventType) {
+	for _, t := range m.session.ListTorrents() {
+		if err := op(t); err == nil {
+			m.eventBus.Publish(Event{
+				Type:    eventType,
+				Torrent: t,
+			})
+		}
+	}
+}
+
 // StartTorrent starts a torrent
 func (m *Manager) StartTorrent(id string) error {
-	t := m.session.GetTorrent(id)
-	if t == nil {
-		return fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
-	}
-	err := t.Start()
-	if err == nil {
-		m.eventBus.Publish(Event{
-			Type:    EventTorrentStarted,
-			Torrent: t,
-		})
-	}
-	return err
+	return m.applyTorrent(id, (*torrent.Torrent).Start, EventTorrentStarted)
 }
 
 // StopTorrent stops a torrent
 func (m *Manager) StopTorrent(id string) error {
-	t := m.session.GetTorrent(id)
-	if t == nil {
-		return fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
-	}
-	err := t.Stop()
+	return m.applyTorrent(id, (*torrent.Torrent).Stop, EventTorrentStopped)
+}
+
+// withTorrent looks up id and runs op on it.
+func (m *Manager) withTorrent(id string, op func(*torrent.Torrent) error) error {
+	t, err := m.torrentByID(id)
 	if err == nil {
-		m.eventBus.Publish(Event{
-			Type:    EventTorrentStopped,
-			Torrent: t,
-		})
+		return op(t)
 	}
 	return err
 }
 
 // VerifyTorrent verifies a torrent's data
 func (m *Manager) VerifyTorrent(id string) error {
-	t := m.session.GetTorrent(id)
-	if t == nil {
-		return fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
-	}
-	return t.Verify()
+	return m.withTorrent(id, (*torrent.Torrent).Verify)
 }
 
-// AnnounceTorrent forces an announce to trackers
+// AnnounceTorrent forces an announce to trackers. Missing IDs are a no-op.
 func (m *Manager) AnnounceTorrent(id string) {
-	t := m.session.GetTorrent(id)
-	if t == nil {
+	t, err := m.torrentByID(id)
+	if err != nil {
 		return
 	}
 	t.Announce()
@@ -160,53 +179,34 @@ func (m *Manager) AnnounceTorrent(id string) {
 
 // AddTracker adds a tracker to a torrent
 func (m *Manager) AddTracker(id, url string) error {
-	t := m.session.GetTorrent(id)
-	if t == nil {
-		return fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
-	}
-	return t.AddTracker(url)
+	return m.withTorrent(id, func(t *torrent.Torrent) error {
+		return t.AddTracker(url)
+	})
 }
 
 // AddPeer adds a peer to a torrent
 func (m *Manager) AddPeer(id, addr string) error {
-	t := m.session.GetTorrent(id)
-	if t == nil {
-		return fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
-	}
-	return t.AddPeer(addr)
+	return m.withTorrent(id, func(t *torrent.Torrent) error {
+		return t.AddPeer(addr)
+	})
 }
 
 // GetPeers returns peers for a torrent
 func (m *Manager) GetPeers(id string) ([]torrent.Peer, error) {
-	t := m.session.GetTorrent(id)
-	if t == nil {
-		return nil, fmt.Errorf("%w: %s", ErrTorrentNotFound, id)
-	}
-	return t.Peers(), nil
+	var peers []torrent.Peer
+	err := m.withTorrent(id, func(t *torrent.Torrent) error {
+		peers = t.Peers()
+		return nil
+	})
+	return peers, err
 }
 
 // StartAll starts all torrents
 func (m *Manager) StartAll() {
-	for _, t := range m.session.ListTorrents() {
-		err := t.Start()
-		if err == nil {
-			m.eventBus.Publish(Event{
-				Type:    EventTorrentStarted,
-				Torrent: t,
-			})
-		}
-	}
+	m.forEachTorrent((*torrent.Torrent).Start, EventTorrentStarted)
 }
 
 // StopAll stops all torrents
 func (m *Manager) StopAll() {
-	for _, t := range m.session.ListTorrents() {
-		err := t.Stop()
-		if err == nil {
-			m.eventBus.Publish(Event{
-				Type:    EventTorrentStopped,
-				Torrent: t,
-			})
-		}
-	}
+	m.forEachTorrent((*torrent.Torrent).Stop, EventTorrentStopped)
 }

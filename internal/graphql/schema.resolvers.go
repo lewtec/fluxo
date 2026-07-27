@@ -34,28 +34,27 @@ func (r *mutationResolver) AddTorrent(ctx context.Context, input AddTorrentInput
 	return MapTorrent(t), nil
 }
 
-// RemoveTorrent implements mutation resolver
-func (r *mutationResolver) RemoveTorrent(ctx context.Context, id string) (bool, error) {
-	if err := r.manager.RemoveTorrent(id); err != nil {
+// okBool maps a manager error into the GraphQL (bool, error) mutation shape.
+func okBool(err error) (bool, error) {
+	if err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+// RemoveTorrent implements mutation resolver
+func (r *mutationResolver) RemoveTorrent(ctx context.Context, id string) (bool, error) {
+	return okBool(r.manager.RemoveTorrent(id))
 }
 
 // StartTorrent implements mutation resolver
 func (r *mutationResolver) StartTorrent(ctx context.Context, id string) (bool, error) {
-	if err := r.manager.StartTorrent(id); err != nil {
-		return false, err
-	}
-	return true, nil
+	return okBool(r.manager.StartTorrent(id))
 }
 
 // StopTorrent implements mutation resolver
 func (r *mutationResolver) StopTorrent(ctx context.Context, id string) (bool, error) {
-	if err := r.manager.StopTorrent(id); err != nil {
-		return false, err
-	}
-	return true, nil
+	return okBool(r.manager.StopTorrent(id))
 }
 
 // StartAllTorrents implements mutation resolver
@@ -72,10 +71,7 @@ func (r *mutationResolver) StopAllTorrents(ctx context.Context) (bool, error) {
 
 // VerifyTorrent implements mutation resolver
 func (r *mutationResolver) VerifyTorrent(ctx context.Context, id string) (bool, error) {
-	if err := r.manager.VerifyTorrent(id); err != nil {
-		return false, err
-	}
-	return true, nil
+	return okBool(r.manager.VerifyTorrent(id))
 }
 
 // AnnounceTorrent implements mutation resolver
@@ -91,18 +87,12 @@ func (r *mutationResolver) AnnounceTorrent(ctx context.Context, id string) (bool
 
 // AddTracker implements mutation resolver
 func (r *mutationResolver) AddTracker(ctx context.Context, id string, url string) (bool, error) {
-	if err := r.manager.AddTracker(id, url); err != nil {
-		return false, err
-	}
-	return true, nil
+	return okBool(r.manager.AddTracker(id, url))
 }
 
 // AddPeer implements mutation resolver
 func (r *mutationResolver) AddPeer(ctx context.Context, id string, addr string) (bool, error) {
-	if err := r.manager.AddPeer(id, addr); err != nil {
-		return false, err
-	}
-	return true, nil
+	return okBool(r.manager.AddPeer(id, addr))
 }
 
 // Torrents implements query resolver for torrents

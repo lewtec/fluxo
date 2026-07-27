@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -9,6 +10,9 @@ import (
 	"github.com/lucasew/fluxo/internal/config"
 	"github.com/lucasew/fluxo/internal/session"
 )
+
+// ErrAlreadyRunning is returned when Start is called on a running server.
+var ErrAlreadyRunning = errors.New("server already running")
 
 // Server manages the Fluxo server
 type Server struct {
@@ -50,7 +54,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.mu.Lock()
 	if s.running {
 		s.mu.Unlock()
-		return fmt.Errorf("server already running")
+		return ErrAlreadyRunning
 	}
 	s.running = true
 	s.mu.Unlock()
@@ -58,6 +62,8 @@ func (s *Server) Start(ctx context.Context) error {
 	// Create cancellable context
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
+
+	s.manager.Start(ctx)
 
 	// Start watcher in background
 	go s.watcher.Start(ctx)
@@ -101,7 +107,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	s.running = false
 
 	if len(errs) > 0 {
-		return fmt.Errorf("errors during shutdown: %v", errs)
+		return fmt.Errorf("errors during shutdown: %w", errors.Join(errs...))
 	}
 
 	return nil

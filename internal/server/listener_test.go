@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"sync"
@@ -11,7 +12,7 @@ import (
 
 func TestHTTPListenerStopBeforeStart(t *testing.T) {
 	l := &HTTPListener{}
-	if err := l.Stop(context.Background()); err != nil {
+	if err := l.Stop(t.Context()); err != nil {
 		t.Fatalf("Stop before Start: %v", err)
 	}
 }
@@ -41,7 +42,7 @@ func TestHTTPListenerStopShutsDownPublishedServer(t *testing.T) {
 	// Ensure Serve has accepted the listener before Shutdown.
 	time.Sleep(20 * time.Millisecond)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
 	defer cancel()
 	if err := l.Stop(ctx); err != nil {
 		t.Fatalf("Stop: %v", err)
@@ -49,7 +50,7 @@ func TestHTTPListenerStopShutsDownPublishedServer(t *testing.T) {
 
 	select {
 	case err := <-errCh:
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			t.Fatalf("Serve: %v", err)
 		}
 	case <-time.After(2 * time.Second):
@@ -61,6 +62,7 @@ func TestHTTPListenerStopShutsDownPublishedServer(t *testing.T) {
 func TestHTTPListenerServerFieldConcurrent(t *testing.T) {
 	l := &HTTPListener{}
 	var wg sync.WaitGroup
+	errCh := make(chan error, 50)
 
 	for i := 0; i < 50; i++ {
 		wg.Add(2)
@@ -74,8 +76,14 @@ func TestHTTPListenerServerFieldConcurrent(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			// Shutdown on a never-started server is a no-op success path.
-			_ = l.Stop(context.Background())
+			if err := l.Stop(t.Context()); err != nil {
+				errCh <- err
+			}
 		}()
 	}
 	wg.Wait()
+	close(errCh)
+	for err := range errCh {
+		t.Errorf("Stop: %v", err)
+	}
 }

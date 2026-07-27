@@ -24,6 +24,9 @@ type UPNPManager struct {
 	clientsMu sync.RWMutex
 	clients   []*internetgateway2.WANIPConnection1
 
+	// root is the lifecycle context from Start; discovery derives timeouts from it.
+	root context.Context
+
 	// Discovery synchronization
 	discoveryOnce sync.Once
 	discoveryDone chan struct{}
@@ -38,7 +41,8 @@ func NewUPNPManager(eb *EventBus) *UPNPManager {
 	}
 }
 
-func (m *UPNPManager) Start() {
+func (m *UPNPManager) Start(ctx context.Context) {
+	m.root = ctx
 	id, ch := m.eventBus.Subscribe()
 	m.subID = id
 
@@ -55,6 +59,8 @@ func (m *UPNPManager) Start() {
 				m.handleEvent(event)
 			case <-m.stopCh:
 				return
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()
@@ -68,7 +74,11 @@ func (m *UPNPManager) ensureDiscovery() {
 }
 
 func (m *UPNPManager) discover() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	if m.root == nil {
+		log.Printf("UPnP: discovery skipped: Start was not called")
+		return
+	}
+	ctx, cancel := context.WithTimeout(m.root, 10*time.Second)
 	defer cancel()
 
 	devs, err := goupnp.DiscoverDevicesCtx(ctx, internetgateway2.URN_WANConnectionDevice_1)
@@ -115,7 +125,9 @@ func (m *UPNPManager) Stop() {
 		wg.Add(1)
 		go func(p int) {
 			defer wg.Done()
-			_ = m.removeMapping(p)
+			if err := m.removeMapping(p); err != nil {
+				log.Printf("UPnP: unmap port %d during stop: %v", p, err)
+			}
 		}(port)
 		delete(m.mappings, id)
 	}
@@ -202,7 +214,7 @@ func (m *UPNPManager) getLocalIP() (string, error) {
 			}
 		}
 	}
-	return "", fmt.Errorf("no suitable local IP found")
+	return "", ErrNoLocalIP
 }
 
 func getLocalIPForClient(client *internetgateway2.WANIPConnection1) (string, error) {
@@ -224,7 +236,6 @@ func getLocalIPForClient(client *internetgateway2.WANIPConnection1) (string, err
 	return localAddr.IP.String(), nil
 }
 
-
 // addMapping adds UPnP port mappings for peer traffic.
 // BitTorrent peer handshakes use TCP on the torrent listen port; UDP is also
 // mapped so µTP (and same-port DHT) keep working when the gateway allows it.
@@ -234,7 +245,7 @@ func (m *UPNPManager) addMapping(port int) error {
 	select {
 	case <-m.discoveryDone:
 	case <-time.After(15 * time.Second): // Wait longer than discovery timeout
-		return fmt.Errorf("timeout waiting for UPnP discovery")
+		return ErrUPNPDiscoveryTimeout
 	}
 
 	m.clientsMu.RLock()
@@ -242,7 +253,7 @@ func (m *UPNPManager) addMapping(port int) error {
 	m.clientsMu.RUnlock()
 
 	if len(clients) == 0 {
-		return fmt.Errorf("no UPnP clients available")
+		return ErrNoUPNPClients
 	}
 
 	var errs error
@@ -269,9 +280,9 @@ func (m *UPNPManager) addMapping(port int) error {
 	}
 
 	if errs != nil {
-		return fmt.Errorf("mapping failed on all devices: %w", errs)
+		return fmt.Errorf("%w: %w", ErrUPNPMappingFailed, errs)
 	}
-	return fmt.Errorf("mapping failed on all devices")
+	return ErrUPNPMappingFailed
 }
 
 // removeMapping removes TCP and UDP UPnP mappings for the port.
@@ -280,9 +291,14 @@ func (m *UPNPManager) removeMapping(port int) error {
 	clients := m.clients
 	m.clientsMu.RUnlock()
 
+	var errs error
 	for _, client := range clients {
-		_ = client.DeletePortMapping("", uint16(port), "TCP")
-		_ = client.DeletePortMapping("", uint16(port), "UDP")
+		if err := client.DeletePortMapping("", uint16(port), "TCP"); err != nil {
+			errs = errors.Join(errs, fmt.Errorf("TCP unmap %d: %w", port, err))
+		}
+		if err := client.DeletePortMapping("", uint16(port), "UDP"); err != nil {
+			errs = errors.Join(errs, fmt.Errorf("UDP unmap %d: %w", port, err))
+		}
 	}
-	return nil
+	return errs
 }

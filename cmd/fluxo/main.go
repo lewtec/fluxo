@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -15,7 +16,10 @@ import (
 )
 
 func main() {
-	if err := newRootCmd().Execute(); err != nil {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	if err := newRootCmd().ExecuteContext(ctx); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -49,12 +53,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("creating server: %w", err)
 	}
 
-	// Setup signal handling for graceful shutdown
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	ctx := cmd.Context()
 
 	// Start server in background
 	errChan := make(chan error, 1)
@@ -62,14 +61,13 @@ func runServer(cmd *cobra.Command, args []string) error {
 		errChan <- srv.Start(ctx)
 	}()
 
-	// Wait for signal or error
+	// Wait for signal (ctx cancelled) or server error
 	select {
-	case <-sigChan:
+	case <-ctx.Done():
 		log.Println("Received shutdown signal, stopping gracefully...")
-		cancel()
 
-		// Give server time to shutdown
-		shutdownCtx, shutdownCancel := context.WithCancel(context.Background())
+		// Independent of the cancelled signal ctx so Shutdown can finish.
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 		defer shutdownCancel()
 
 		if err := srv.Stop(shutdownCtx); err != nil {
