@@ -1,13 +1,17 @@
 package session
 
-import "errors"
+// sessionError is a stable session-level sentinel. Prefer these (or
+// fmt.Errorf %w wrapping them) over bare errors.New so callers can errors.Is.
+type sessionError string
 
-// Common errors that can be checked with errors.Is.
-var (
-	ErrTorrentNotFound      = errors.New("torrent not found")
-	ErrInvalidURI           = errors.New("invalid torrent URI")
-	ErrNoLocalIP            = errors.New("no suitable local IP found")
-	ErrUPNPDiscoveryTimeout = errors.New("timeout waiting for UPnP discovery")
-	ErrNoUPNPClients        = errors.New("no UPnP clients available")
-	ErrUPNPMappingFailed    = errors.New("mapping failed on all devices")
+func (e sessionError) Error() string { return string(e) }
+
+// Session error table. Dynamic detail is attached with fmt.Errorf %w.
+const (
+	ErrTorrentNotFound      sessionError = "torrent not found"
+	ErrInvalidURI           sessionError = "invalid torrent URI"
+	ErrNoLocalIP            sessionError = "no suitable local IP found"
+	ErrUPNPDiscoveryTimeout sessionError = "timeout waiting for UPnP discovery"
+	ErrNoUPNPClients        sessionError = "no UPnP clients available"
+	ErrUPNPMappingFailed    sessionError = "mapping failed on all devices"
 )
