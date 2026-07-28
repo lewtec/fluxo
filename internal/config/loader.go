@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -24,11 +23,11 @@ func Load(cmd *cobra.Command) (*Config, error) {
 		v.SetConfigName("fluxo")
 		v.SetConfigType("yaml")
 
-		// Add search paths
+		// Add search paths. Use getHomeDir (same as DefaultConfig) so the
+		// optional ~/.fluxo config path matches default database/data-dir roots
+		// when $HOME and os.UserHomeDir diverge.
 		v.AddConfigPath(".")
-		if home, err := os.UserHomeDir(); err == nil {
-			v.AddConfigPath(filepath.Join(home, ".fluxo"))
-		}
+		v.AddConfigPath(filepath.Join(getHomeDir(), ".fluxo"))
 		v.AddConfigPath("/etc/fluxo")
 	}
 
