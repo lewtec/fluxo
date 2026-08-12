@@ -31,7 +31,7 @@ type Torrent {
     addedAt: Time!
     status: TorrentStatus!
 
-    # Bytes (String para suportar >2^53)
+    # Byte counts as String so values above JS Number.MAX_SAFE_INTEGER stay exact
     bytesCompleted: String!
     bytesTotal: String!
     bytesDownloaded: String!

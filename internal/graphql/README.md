@@ -1,50 +1,52 @@
-# GraphQL Package
+# GraphQL package
 
-## Status
+GraphQL API for Fluxo: schema, gqlgen-generated executors, Rain mappers, and resolvers.
 
-✅ **Schema definido** - `schema.graphql` completo com queries, mutations, subscriptions
-✅ **Resolvers implementados** - `schema.resolvers.go` com lógica de negócio
-✅ **Mappers criados** - `mappers.go` converte tipos Rain para GraphQL
-⚠️ **Code generation pendente** - Aguardando `gqlgen generate` em ambiente com rede estável
+## Layout
 
-## Arquivos
+| File | Role |
+|------|------|
+| `schema.graphql` | Queries, mutations, subscriptions, and types |
+| `schema.resolvers.go` | Resolver implementations (kept across regenerate) |
+| `generated.go` | gqlgen executable schema |
+| `models_gen.go` | gqlgen model types |
+| `mappers.go` | Rain torrent types → GraphQL models |
+| `resolver.go` | Root resolver (`session.Manager`) |
+| `send_sub_test.go` | Tests for subscription drain helpers |
 
-- `schema.graphql` - Schema GraphQL completo
-- `schema.resolvers.go` - Implementação dos resolvers (gerado pelo gqlgen)
-- `generated.go` - Código gerado pelo gqlgen (parcial)
-- `models_gen.go` - Modelos gerados (stub)
-- `mappers.go` - Funções de mapeamento Rain → GraphQL
-- `resolver.go` - Root resolver
+## Regenerate
 
-## Próximos Passos
-
-Para completar a geração do código GraphQL:
+Needs network the first time tools are fetched:
 
 ```bash
-# Em um ambiente com rede estável
-go run github.com/99designs/gqlgen@latest generate
+go tool github.com/99designs/gqlgen generate
 ```
 
-Isso irá:
-1. Gerar os tipos em `models_gen.go`
-2. Atualizar `generated.go` com executores
-3. Completar a implementação do GraphQL server
+Config: `gqlgen.yml` at the repo root. Prefer regenerating after schema changes; do not hand-edit `generated.go` or `models_gen.go`.
 
-## Erros Nomeados
+## Errors
 
-O package usa erros nomeados no `internal/session/errors.go`:
+Session-level sentinels live in `internal/session/errors.go` (typed `sessionError` table). Resolvers wrap with `%w` so callers can use `errors.Is`.
+
+Current sentinels include:
+
 - `ErrTorrentNotFound`
 - `ErrInvalidURI`
-- `ErrAlreadyExists`
-- `ErrSessionClosed`
-- `ErrInvalidID`
+- `ErrNoLocalIP`
+- `ErrUPNPDiscoveryTimeout`
+- `ErrNoUPNPClients`
+- `ErrUPNPMappingFailed`
 
-Todos os erros usam `%w` para permitir `errors.Is()` e `errors.As()`.
+## Subscriptions
 
-## API Rain 1.13.0
+`subscribeFilter` / `sendSub` drain the session `EventBus` into buffered channels. When a client is slow, oldest buffered values are dropped so the bus itself does not back up (see `subOutBuffer` and tests in `send_sub_test.go`).
 
-Os mappers foram atualizados para a API do Rain 1.13.0:
-- `Stats.Bytes.Completed` ao invés de `BytesCompleted`
-- `Stats.Speed.Download/Upload`
-- `t.AddedAt()` método ao invés de campo
-- Tipos FileStats, Tracker e Webseed atualizados
+## Rain mapping notes
+
+Mappers target Rain 1.13-style stats:
+
+- Nested `Stats.Bytes.*` and `Stats.Speed.*`
+- `t.AddedAt()` method
+- `FileStats` / `Tracker` / `Webseed` slices from torrent methods
+
+Some GraphQL fields are intentionally zeroed when Rain does not expose the data (e.g. `downloadTime`, file `priority`).
