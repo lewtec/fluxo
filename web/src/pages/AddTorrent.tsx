@@ -7,11 +7,6 @@ import { ArrowLeft, Upload, Link as LinkIcon, FileText } from 'lucide-react';
 import parseTorrent, { toMagnetURI } from 'parse-torrent';
 import { Buffer } from 'buffer';
 
-// Ensure Buffer is available globally for parse-torrent if needed
-if (typeof window !== 'undefined') {
-    (window as Window & { Buffer?: typeof Buffer }).Buffer = Buffer;
-}
-
 const AddTorrentMutation = graphql`
   mutation AddTorrentMutation($input: AddTorrentInput!) {
     addTorrent(input: $input) {

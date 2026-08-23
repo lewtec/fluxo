@@ -6,8 +6,9 @@ import tailwind from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [tailwind(), react(), relay],
   define: {
-    // Polyfill for parse-torrent/bencode
-    'global': {},
+    // Identifier, not JSON: same globalThis as optimizeDeps so parse-torrent
+    // sees the Buffer installed in main.tsx ({} was a detached stub).
+    global: 'globalThis',
   },
   resolve: {
     alias: {
