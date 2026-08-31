@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5dc15ae15317c89d4d6b719c1e1056f0>>
+ * @generated SignedSource<<209c499586ed2110e413a08a5465bfae>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,9 +21,11 @@ export type TorrentDetailUpdatedSubscription$data = {
     readonly eta: number | null | undefined;
     readonly files: ReadonlyArray<{
       readonly bytesCompleted: string;
+      readonly length: string;
       readonly path: string;
     }>;
     readonly id: string;
+    readonly name: string;
     readonly peers: {
       readonly incoming: number;
       readonly outgoing: number;
@@ -73,6 +75,13 @@ v2 = [
         "args": null,
         "kind": "ScalarField",
         "name": "id",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "name",
         "storageKey": null
       },
       {
@@ -158,6 +167,13 @@ v2 = [
             "name": "path",
             "storageKey": null
           },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "length",
+            "storageKey": null
+          },
           (v1/*: any*/)
         ],
         "storageKey": null
@@ -184,16 +200,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "7d93be48ea4f5cae9a8e274a362cab29",
+    "cacheID": "d4ff37fa9b653cb388daad37d136cf4d",
     "id": null,
     "metadata": {},
     "name": "TorrentDetailUpdatedSubscription",
     "operationKind": "subscription",
-    "text": "subscription TorrentDetailUpdatedSubscription(\n  $id: ID\n) {\n  torrentUpdated(id: $id) {\n    id\n    status\n    bytesCompleted\n    bytesTotal\n    downloadSpeed\n    uploadSpeed\n    eta\n    peers {\n      total\n      incoming\n      outgoing\n    }\n    files {\n      path\n      bytesCompleted\n    }\n  }\n}\n"
+    "text": "subscription TorrentDetailUpdatedSubscription(\n  $id: ID\n) {\n  torrentUpdated(id: $id) {\n    id\n    name\n    status\n    bytesCompleted\n    bytesTotal\n    downloadSpeed\n    uploadSpeed\n    eta\n    peers {\n      total\n      incoming\n      outgoing\n    }\n    files {\n      path\n      length\n      bytesCompleted\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "23d8576cfe1cc29d057f5f172bc1e7ce";
+(node as any).hash = "87ca0aef5ef03db9e97b613ef073c13c";
 
 export default node;

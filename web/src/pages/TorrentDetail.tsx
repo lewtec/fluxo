@@ -39,6 +39,7 @@ const TorrentDetailUpdatedSubscription = graphql`
   subscription TorrentDetailUpdatedSubscription($id: ID) {
     torrentUpdated(id: $id) {
       id
+      name
       status
       bytesCompleted
       bytesTotal
@@ -52,6 +53,7 @@ const TorrentDetailUpdatedSubscription = graphql`
       }
       files {
         path
+        length
         bytesCompleted
       }
     }

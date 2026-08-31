@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<538c43fddf6ad50546a5fa6a9c90d3d8>>
+ * @generated SignedSource<<1d181fad3b968b8747fa3637228de791>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,6 +18,7 @@ export type TorrentListUpdatedSubscription$data = {
     readonly downloadSpeed: number;
     readonly eta: number | null | undefined;
     readonly id: string;
+    readonly name: string;
     readonly peers: {
       readonly total: number;
     };
@@ -45,6 +46,13 @@ var v0 = [
         "args": null,
         "kind": "ScalarField",
         "name": "id",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "name",
         "storageKey": null
       },
       {
@@ -129,16 +137,16 @@ return {
     "selections": (v0/*: any*/)
   },
   "params": {
-    "cacheID": "da8190637bef31753db3ccbc8ad1c0f9",
+    "cacheID": "dc6978fe358c75b9dd43ac4e3bda88a5",
     "id": null,
     "metadata": {},
     "name": "TorrentListUpdatedSubscription",
     "operationKind": "subscription",
-    "text": "subscription TorrentListUpdatedSubscription {\n  torrentUpdated {\n    id\n    status\n    bytesCompleted\n    bytesTotal\n    downloadSpeed\n    uploadSpeed\n    eta\n    peers {\n      total\n    }\n  }\n}\n"
+    "text": "subscription TorrentListUpdatedSubscription {\n  torrentUpdated {\n    id\n    name\n    status\n    bytesCompleted\n    bytesTotal\n    downloadSpeed\n    uploadSpeed\n    eta\n    peers {\n      total\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "af8868e8976972e6bd427492bc540cb1";
+(node as any).hash = "affdb81aa2179aefee71ed357c6af766";
 
 export default node;

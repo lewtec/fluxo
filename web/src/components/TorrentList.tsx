@@ -25,6 +25,7 @@ const TorrentUpdatedSubscription = graphql`
   subscription TorrentListUpdatedSubscription {
     torrentUpdated {
       id
+      name
       status
       bytesCompleted
       bytesTotal

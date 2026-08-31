@@ -97,9 +97,15 @@ func errorChanged(a, b error) bool {
 
 // statsChanged compares two torrent stats for changes
 func statsChanged(old, new *torrent.Stats) bool {
-	// Compare key fields that change frequently
+	// Compare fields that drive the UI. Name and Bytes.Total change when
+	// magnet metadata arrives; Bytes.Uploaded / Pieces.Have change while seeding
+	// even if instantaneous speed is zero between ticks.
 	return old.Status != new.Status ||
+		old.Name != new.Name ||
 		old.Bytes.Completed != new.Bytes.Completed ||
+		old.Bytes.Total != new.Bytes.Total ||
+		old.Bytes.Uploaded != new.Bytes.Uploaded ||
+		old.Pieces.Have != new.Pieces.Have ||
 		old.Speed.Download != new.Speed.Download ||
 		old.Speed.Upload != new.Speed.Upload ||
 		old.Peers.Total != new.Peers.Total ||
