@@ -17,12 +17,6 @@ func MapTorrent(t *torrent.Torrent) *Torrent {
 		eta = &etaSec
 	}
 
-	var errStr *string
-	if stats.Error != nil {
-		msg := stats.Error.Error()
-		errStr = &msg
-	}
-
 	// Trackers/webseeds work regardless of run state; files need a fallback (see mapTorrentFiles).
 	trackers := t.Trackers()
 	webseeds := t.Webseeds()
@@ -52,7 +46,7 @@ func MapTorrent(t *torrent.Torrent) *Torrent {
 		Trackers:        MapTrackers(trackers),
 		Webseeds:        MapWebseeds(webseeds),
 		Private:         stats.Private,
-		Error:           errStr,
+		Error:           errString(stats.Error),
 	}
 }
 
@@ -134,12 +128,6 @@ func MapFiles(files []torrent.FileStats) []*File {
 func MapTrackers(trackers []torrent.Tracker) []*Tracker {
 	result := make([]*Tracker, len(trackers))
 	for i, tr := range trackers {
-		var errStr *string
-		if tr.Error != nil {
-			msg := tr.Error.Error()
-			errStr = &msg
-		}
-
 		leechers := tr.Leechers
 		seeders := tr.Seeders
 
@@ -157,7 +145,7 @@ func MapTrackers(trackers []torrent.Tracker) []*Tracker {
 			Status:       status,
 			Leechers:     &leechers,
 			Seeders:      &seeders,
-			Error:        errStr,
+			Error:        errString(tr.Error),
 			NextAnnounce: &nextAnn,
 			LastAnnounce: &lastAnn,
 		}
@@ -186,17 +174,11 @@ func MapTrackerStatus(status torrent.TrackerStatus) TrackerStatus {
 func MapWebseeds(webseeds []torrent.Webseed) []*Webseed {
 	result := make([]*Webseed, len(webseeds))
 	for i, ws := range webseeds {
-		var errStr *string
-		if ws.Error != nil {
-			msg := ws.Error.Error()
-			errStr = &msg
-		}
-
 		result[i] = &Webseed{
 			URL:             ws.URL,
 			DownloadSpeed:   ws.DownloadSpeed,
 			BytesDownloaded: "0", // Not available in current API
-			Error:           errStr,
+			Error:           errString(ws.Error),
 		}
 	}
 	return result
@@ -263,4 +245,13 @@ func MapSessionStats(stats *torrent.SessionStats) *SessionStats {
 		WriteCacheSize:        strconv.FormatInt(stats.WriteCacheSize, 10),
 		WriteCachePendingKeys: stats.WriteCachePendingKeys,
 	}
+}
+
+// errString returns a pointer to err.Error(), or nil if err is nil.
+func errString(err error) *string {
+	if err == nil {
+		return nil
+	}
+	msg := err.Error()
+	return &msg
 }
