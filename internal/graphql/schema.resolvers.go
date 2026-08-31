@@ -125,7 +125,8 @@ func (r *queryResolver) SessionStats(ctx context.Context) (*SessionStats, error)
 func (r *queryResolver) TorrentPeers(ctx context.Context, id string) ([]*Peer, error) {
 	peers, err := r.manager.GetPeers(id)
 	if err != nil {
-		return nil, fmt.Errorf("getting peers: %w", err)
+		// GetPeers already wraps ErrTorrentNotFound; do not double-prefix.
+		return nil, err
 	}
 	return MapPeers(peers), nil
 }
