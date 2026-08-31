@@ -78,8 +78,18 @@ func runServer(cmd *cobra.Command, args []string) error {
 		return nil
 
 	case err := <-errChan:
+		// ListenAndServe returned without the signal path (bind failure,
+		// unexpected exit). Always Stop so the Rain session, UPnP maps,
+		// and watcher do not leak with open DB/files.
+		stopErr := srv.Stop(context.Background())
 		if err != nil {
+			if stopErr != nil {
+				return fmt.Errorf("server error: %w; shutdown: %v", err, stopErr)
+			}
 			return fmt.Errorf("server error: %w", err)
+		}
+		if stopErr != nil {
+			return fmt.Errorf("shutdown error: %w", stopErr)
 		}
 		return nil
 	}
