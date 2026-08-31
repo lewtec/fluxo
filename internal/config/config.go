@@ -84,6 +84,16 @@ func DefaultConfig() *Config {
 	}
 }
 
+// ToRainConfig converts Fluxo config into Rain's torrent.Config, including
+// top-level flags that are not part of TorrentConfig (currently Debug).
+func (c *Config) ToRainConfig() *torrent.Config {
+	config := c.Torrent.ToRainConfig()
+	// --debug was registered and unmarshaled but never applied; Rain enables
+	// its debug logger only when Config.Debug is true (session.go).
+	config.Debug = c.Debug
+	return config
+}
+
 // ToRainConfig converts TorrentConfig to Rain's torrent.Config
 func (c *TorrentConfig) ToRainConfig() *torrent.Config {
 	config := torrent.DefaultConfig

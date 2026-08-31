@@ -28,8 +28,8 @@ type Server struct {
 
 // New creates a new server
 func New(cfg *config.Config) (*Server, error) {
-	// Create session manager
-	rainCfg := cfg.Torrent.ToRainConfig()
+	// Create session manager (includes top-level --debug → rain Config.Debug)
+	rainCfg := cfg.ToRainConfig()
 	manager, err := session.New(*rainCfg)
 	if err != nil {
 		return nil, fmt.Errorf("creating session manager: %w", err)

@@ -112,3 +112,32 @@ func TestLoadValidExplicitConfig(t *testing.T) {
 		t.Errorf("APIHost = %q, want 0.0.0.0", cfg.APIHost)
 	}
 }
+
+func TestToRainConfigMapsDebug(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.ToRainConfig().Debug {
+		t.Fatal("default Debug should be false on rain config")
+	}
+	cfg.Debug = true
+	if !cfg.ToRainConfig().Debug {
+		t.Fatal("Debug=true must set rain Config.Debug so session enables debug logging")
+	}
+}
+
+func TestLoadDebugFlag(t *testing.T) {
+	cmd := &cobra.Command{Use: "fluxo"}
+	AddFlags(cmd)
+	if err := cmd.ParseFlags([]string{"--debug"}); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Debug {
+		t.Fatal("Load with --debug: Config.Debug = false, want true")
+	}
+	if !cfg.ToRainConfig().Debug {
+		t.Fatal("Load with --debug: rain Config.Debug = false, want true")
+	}
+}
