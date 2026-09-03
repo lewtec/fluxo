@@ -31,7 +31,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "babel-plugin-relay": "^20.1.1",
     "daisyui": "^5.5.5",
-    "relay-compiler": "^20.1.1",
+    "relay-compiler": "^21.0.0",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3",
     "vite": "^7.2.6",
