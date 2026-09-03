@@ -19,7 +19,7 @@
     "path-browserify": "^1.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-relay": "^20.1.1",
+    "react-relay": "^21.0.0",
     "react-router-dom": "^7.9.6",
     "relay-runtime": "^20.1.1"
   },
