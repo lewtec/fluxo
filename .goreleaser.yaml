@@ -61,7 +61,7 @@ dockers_v2:
       "org.opencontainers.image.revision": "{{ .FullCommit }}"
       "org.opencontainers.image.version": "{{ .Version }}"
       "org.opencontainers.image.source": "{{ .GitURL }}"
-      "org.opencontainers.image.description": "BitTorrent client with GraphQL API and web UI"
+      "org.opencontainers.image.description": "BitTorrent client with a web UI"
     flags:
       - "--provenance=false"
 
