@@ -1,41 +1,38 @@
 # Fluxo
 
-Modern BitTorrent client with a GraphQL API and React web interface.
+BitTorrent client with a server-rendered web UI.
 
 ## Features
 
-- **BitTorrent Client**: Built on Rain, a robust BitTorrent library
-- **GraphQL API**: Full-featured GraphQL API with subscriptions
-- **Real-time Updates**: WebSocket subscriptions for live torrent updates
-- **Modern Web UI**: React + Relay + DaisyUI interface
-- **Flexible Configuration**: CLI flags, environment variables, or config file
+- **BitTorrent Client**: Built on Rain
+- **templ UI**: HTML pages rendered in Go
+- **Live updates**: Server-Sent Events for torrent list, detail, and speeds
+- **Configuration**: CLI flags, environment variables, or a config file
 
 ## Architecture
 
 ### Backend (Go)
-- **Rain**: BitTorrent protocol implementation
-- **Cobra + Viper**: CLI and configuration management
-- **gqlgen**: GraphQL server with subscription support
-- **Event Bus**: Internal event system for real-time updates
 
-### Frontend (TypeScript/React)
-- **React 18**: Modern React with hooks
-- **Relay**: GraphQL client with normalized cache
-- **DaisyUI 5**: Component library built on Tailwind 4
-- **Vite**: Fast build tool and dev server
+- **Rain**: BitTorrent protocol implementation
+- **Cobra + Viper**: CLI and configuration
+- **templ**: HTML templates compiled into the binary
+- **Event Bus**: Internal events drive the SSE stream
+
+### Frontend
+
+- **templ** pages and fragments
+- **daisyUI 5** on Tailwind 4 (compiled CSS, embedded)
+- Small `EventSource` script swaps live fragments
 
 ## Building
 
 ### Prerequisites
+
 - Go 1.24+
-- Node.js 18+
+- Node.js 18+ (only to rebuild CSS)
 
-### Build Backend
-```bash
-go build -o fluxo ./cmd/fluxo
-```
+### Build CSS (when templates change)
 
-### Build Frontend
 ```bash
 cd web
 npm install
@@ -43,48 +40,50 @@ npm run build
 cd ..
 ```
 
-### Build All
-The backend embeds the frontend, so build in order:
+### Generate templates (when `.templ` files change)
+
 ```bash
-cd web && npm install && npm run build && cd ..
+go generate ./internal/webui
+```
+
+### Build binary
+
+The backend embeds `web/static`:
+
+```bash
 go build -o fluxo ./cmd/fluxo
 ```
 
 ## Running
 
-### Production Mode
 ```bash
 ./fluxo
 ```
 
-### Development Mode
-Terminal 1 (Backend with dev proxy):
-```bash
-go run ./cmd/fluxo --dev-mode
-```
+Then open `http://127.0.0.1:8080`.
 
-Terminal 2 (Frontend dev server):
-```bash
-cd web
-npm run dev
-```
+`--dev-mode` turns off static-asset caching. `--dev-proxy` is ignored.
 
 ## Configuration
 
 ### CLI Flags
+
 ```bash
 ./fluxo --help
 ```
 
 Key flags:
-- `--api-port`: API server port (default: 8080)
-- `--api-host`: API server host (default: 127.0.0.1)
+
+- `--api-port`: HTTP port (default: 8080)
+- `--api-host`: HTTP host (default: 127.0.0.1)
 - `--data-dir`: Downloads directory (default: ~/.fluxo/downloads)
 - `--database`: Session database path (default: ~/.fluxo/session.db)
 - `--debug`: Enable debug logging
 
 ### Environment Variables
-All flags can be set via environment variables with `FLUXO_` prefix:
+
+All flags can be set via environment variables with a `FLUXO_` prefix:
+
 ```bash
 export FLUXO_API_PORT=9090
 export FLUXO_DATA_DIR=/mnt/torrents
@@ -92,7 +91,9 @@ export FLUXO_DATA_DIR=/mnt/torrents
 ```
 
 ### Config File
-Create `fluxo.yaml` in current directory, `~/.fluxo/`, or `/etc/fluxo/`:
+
+Create `fluxo.yaml` in the current directory, `~/.fluxo/`, or `/etc/fluxo/`:
+
 ```yaml
 api-port: 8080
 api-host: 127.0.0.1
@@ -100,22 +101,21 @@ data-dir: /mnt/torrents
 database: /var/lib/fluxo/session.db
 ```
 
-## API
+## HTTP
 
-### GraphQL Endpoint
-```
-POST http://localhost:8080/graphql
-```
+| Method | Path | Role |
+| --- | --- | --- |
+| GET | `/` | Torrent list |
+| GET | `/add` | Add torrent form |
+| POST | `/torrents` | Add magnet or `.torrent` file |
+| GET | `/torrents/{id}` | Torrent detail |
+| POST | `/torrents/{id}/start` | Start |
+| POST | `/torrents/{id}/stop` | Stop |
+| POST | `/torrents/{id}/remove` | Remove |
+| GET | `/events` | SSE stream |
+| GET | `/static/*` | CSS and JS |
 
-### GraphQL Playground
-```
-http://localhost:8080/graphiql
-```
-
-### WebSocket (Subscriptions)
-```
-ws://localhost:8080/graphql
-```
+SSE event names: `stats`, `list`, `detail`, `removed`. Each `data` payload is an HTML fragment except `removed`, which is the torrent id.
 
 ## Project Structure
 
@@ -125,13 +125,9 @@ fluxo/
 ├── internal/
 │   ├── config/         # Configuration (Cobra + Viper)
 │   ├── server/         # HTTP server and listener
-│   ├── graphql/        # GraphQL schema and resolvers
+│   ├── webui/          # templ pages, SSE, form handlers
 │   └── session/        # Torrent session manager and event bus
-├── web/                # React frontend
-│   ├── src/
-│   │   ├── components/ # React components
-│   │   └── relay/      # Relay environment
-│   └── dist/           # Built frontend (embedded in Go binary)
+├── web/                # Tailwind/daisyUI build and embedded static files
 ├── go.mod
 └── README.md
 ```

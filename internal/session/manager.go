@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/cenkalti/rain/torrent"
 )
@@ -67,6 +68,25 @@ func (m *Manager) AddTorrent(uri string, opts *torrent.AddTorrentOptions) (*torr
 	}
 
 	// Publish event
+	m.eventBus.Publish(Event{
+		Type:    EventTorrentAdded,
+		Torrent: t,
+	})
+
+	return t, nil
+}
+
+// AddTorrentFile adds a torrent from a .torrent metainfo reader.
+func (m *Manager) AddTorrentFile(r io.Reader, opts *torrent.AddTorrentOptions) (*torrent.Torrent, error) {
+	if r == nil {
+		return nil, fmt.Errorf("%w: empty reader", ErrInvalidTorrent)
+	}
+
+	t, err := m.session.AddTorrent(r, opts)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrInvalidTorrent, err)
+	}
+
 	m.eventBus.Publish(Event{
 		Type:    EventTorrentAdded,
 		Torrent: t,
