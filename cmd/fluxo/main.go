@@ -32,7 +32,7 @@ func newRootCmd() *cobra.Command {
 		Use:     "fluxo",
 		Version: version,
 		Short:   "BitTorrent client with a web UI",
-		RunE: runServer,
+		RunE:    runServer,
 	}
 
 	// Add flags
