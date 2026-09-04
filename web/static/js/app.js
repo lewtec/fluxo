@@ -4,9 +4,11 @@ function currentTheme() {
   return document.documentElement.getAttribute("data-theme") === "listing" ? "listing" : "bay";
 }
 
-function persistTheme(theme) {
+function applyTheme(theme) {
+  const next = theme === "listing" ? "listing" : "bay";
+  document.documentElement.setAttribute("data-theme", next);
   try {
-    localStorage.setItem(THEME_KEY, theme);
+    localStorage.setItem(THEME_KEY, next);
   } catch (e) {
     // private mode / blocked storage
   }
@@ -67,7 +69,7 @@ function bindTheme() {
   if (!box) return;
   box.checked = currentTheme() === "listing";
   box.addEventListener("change", () => {
-    persistTheme(box.checked ? "listing" : "bay");
+    applyTheme(box.checked ? "listing" : "bay");
   });
 }
 
