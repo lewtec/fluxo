@@ -18,7 +18,7 @@ func AddFlags(cmd *cobra.Command) {
 	flags.Int("api-port", defaults.APIPort, "API server port")
 	flags.String("api-host", defaults.APIHost, "API server host")
 	flags.Bool("debug", defaults.Debug, "enable debug logging")
-	flags.Bool("dev-mode", defaults.DevMode, "disable static-asset caching")
+	flags.Bool("dev-mode", defaults.DevMode, "deprecated: ignored")
 	flags.String("dev-proxy", defaults.DevProxy, "deprecated: ignored")
 
 	// Watcher settings
