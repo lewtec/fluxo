@@ -30,6 +30,7 @@ type TorrentView struct {
 	ID            string
 	Name          string
 	Status        string
+	StatusCode    string
 	StatusClass   string
 	BytesDone     string
 	BytesTotal    string
@@ -75,19 +76,36 @@ func mapStatus(status torrent.Status) string {
 	}
 }
 
+func statusCode(status torrent.Status) string {
+	switch status {
+	case torrent.Seeding:
+		return "SEED"
+	case torrent.Downloading:
+		return "DL"
+	case torrent.DownloadingMetadata:
+		return "META"
+	case torrent.Allocating:
+		return "ALLOC"
+	case torrent.Verifying:
+		return "HASH"
+	case torrent.Stopping:
+		return "STOP"
+	default:
+		return "IDLE"
+	}
+}
+
 func statusClass(status torrent.Status, hasErr bool) string {
 	if hasErr {
-		return "badge-error"
+		return "text-error"
 	}
 	switch status {
 	case torrent.Seeding:
-		return "badge-success"
+		return "text-success"
 	case torrent.Downloading, torrent.DownloadingMetadata:
-		return "badge-info"
-	case torrent.Stopped, torrent.Stopping:
-		return "badge-neutral"
+		return "text-accent"
 	default:
-		return "badge-ghost"
+		return "text-base-content/70"
 	}
 }
 
@@ -158,7 +176,7 @@ func torrentView(t *torrent.Torrent) TorrentView {
 	}
 
 	progress := progressPercent(stats.Bytes.Completed, stats.Bytes.Total)
-	progressClass := "progress-primary"
+	progressClass := ""
 	if stats.Status == torrent.Seeding || progress >= 100 {
 		progressClass = "progress-success"
 	}
@@ -167,6 +185,7 @@ func torrentView(t *torrent.Torrent) TorrentView {
 		ID:            t.ID(),
 		Name:          stats.Name,
 		Status:        mapStatus(stats.Status),
+		StatusCode:    statusCode(stats.Status),
 		StatusClass:   statusClass(stats.Status, stats.Error != nil),
 		BytesDone:     formatBytes(stats.Bytes.Completed),
 		BytesTotal:    formatBytes(stats.Bytes.Total),

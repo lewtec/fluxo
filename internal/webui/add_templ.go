@@ -41,65 +41,49 @@ func AddTorrentPage(stats SpeedStats, page AddPage) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-2xl mx-auto\"><a href=\"/\" class=\"btn btn-ghost btn-sm gap-2 pl-0 mb-4\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = iconBack().Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "Back</a><div class=\"card bg-base-100 shadow-xl\"><div class=\"card-body\"><h2 class=\"card-title mb-6\">Add Torrent</h2><form method=\"post\" action=\"/torrents\" enctype=\"multipart/form-data\"><div role=\"tablist\" class=\"tabs tabs-box mb-6\"><input type=\"radio\" name=\"add_tab\" class=\"tab\" aria-label=\"Magnet Link\" checked><div class=\"tab-content mt-4\"><fieldset class=\"fieldset w-full\"><legend class=\"fieldset-legend\">Magnet URI</legend> <textarea name=\"uri\" class=\"textarea h-24 font-mono text-xs w-full\" placeholder=\"magnet:?xt=urn:btih:...\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-xl\"><p class=\"mb-3\"><a href=\"/\" class=\"link\">← list</a></p><h1 class=\"text-lg font-bold mb-4\">Add</h1><form method=\"post\" action=\"/torrents\" enctype=\"multipart/form-data\" class=\"space-y-4\"><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">Magnet URI</legend> <textarea name=\"uri\" class=\"textarea font-mono text-xs w-full h-24\" placeholder=\"magnet:?xt=urn:btih:...\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(page.URI)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `add.templ`, Line: 23, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `add.templ`, Line: 15, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</textarea></fieldset></div><input type=\"radio\" name=\"add_tab\" class=\"tab\" aria-label=\".torrent File\"><div class=\"tab-content mt-4\"><fieldset class=\"fieldset w-full\"><legend class=\"fieldset-legend\">Upload .torrent file</legend><div class=\"border-2 border-dashed border-base-300 rounded-box p-8 text-center\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = iconUpload().Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<input type=\"file\" name=\"file\" accept=\".torrent\" class=\"file-input w-full max-w-xs\"></div></fieldset></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</textarea></fieldset><fieldset class=\"fieldset\"><legend class=\"fieldset-legend\">or a .torrent file</legend> <input type=\"file\" name=\"file\" accept=\".torrent\" class=\"file-input w-full\"></fieldset>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if page.Error != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div role=\"alert\" class=\"alert alert-error mt-4 text-sm\"><span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div role=\"alert\" class=\"alert alert-error text-sm\"><span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(page.Error)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `add.templ`, Line: 39, Col: 26}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `add.templ`, Line: 23, Col: 24}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</span></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"card-actions justify-end mt-6\"><button type=\"submit\" class=\"btn btn-primary\">Add Torrent</button></div></form></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<button type=\"submit\" class=\"btn\">Add</button></form></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Chrome("Add Torrent — Fluxo", stats).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Chrome("Add — Fluxo", stats).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

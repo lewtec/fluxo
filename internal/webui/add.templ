@@ -1,50 +1,30 @@
 package webui
 
 templ AddTorrentPage(stats SpeedStats, page AddPage) {
-	@Chrome("Add Torrent — Fluxo", stats) {
-		<div class="max-w-2xl mx-auto">
-			<a href="/" class="btn btn-ghost btn-sm gap-2 pl-0 mb-4">
-				@iconBack()
-				Back
-			</a>
-			<div class="card bg-base-100 shadow-xl">
-				<div class="card-body">
-					<h2 class="card-title mb-6">Add Torrent</h2>
-					<form method="post" action="/torrents" enctype="multipart/form-data">
-						<div role="tablist" class="tabs tabs-box mb-6">
-							<input type="radio" name="add_tab" class="tab" aria-label="Magnet Link" checked/>
-							<div class="tab-content mt-4">
-								<fieldset class="fieldset w-full">
-									<legend class="fieldset-legend">Magnet URI</legend>
-									<textarea
-										name="uri"
-										class="textarea h-24 font-mono text-xs w-full"
-										placeholder="magnet:?xt=urn:btih:..."
-									>{ page.URI }</textarea>
-								</fieldset>
-							</div>
-							<input type="radio" name="add_tab" class="tab" aria-label=".torrent File"/>
-							<div class="tab-content mt-4">
-								<fieldset class="fieldset w-full">
-									<legend class="fieldset-legend">Upload .torrent file</legend>
-									<div class="border-2 border-dashed border-base-300 rounded-box p-8 text-center">
-										@iconUpload()
-										<input type="file" name="file" accept=".torrent" class="file-input w-full max-w-xs"/>
-									</div>
-								</fieldset>
-							</div>
-						</div>
-						if page.Error != "" {
-							<div role="alert" class="alert alert-error mt-4 text-sm">
-								<span>{ page.Error }</span>
-							</div>
-						}
-						<div class="card-actions justify-end mt-6">
-							<button type="submit" class="btn btn-primary">Add Torrent</button>
-						</div>
-					</form>
-				</div>
-			</div>
+	@Chrome("Add — Fluxo", stats) {
+		<div class="max-w-xl">
+			<p class="mb-3"><a href="/" class="link">← list</a></p>
+			<h1 class="text-lg font-bold mb-4">Add</h1>
+			<form method="post" action="/torrents" enctype="multipart/form-data" class="space-y-4">
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">Magnet URI</legend>
+					<textarea
+						name="uri"
+						class="textarea font-mono text-xs w-full h-24"
+						placeholder="magnet:?xt=urn:btih:..."
+					>{ page.URI }</textarea>
+				</fieldset>
+				<fieldset class="fieldset">
+					<legend class="fieldset-legend">or a .torrent file</legend>
+					<input type="file" name="file" accept=".torrent" class="file-input w-full"/>
+				</fieldset>
+				if page.Error != "" {
+					<div role="alert" class="alert alert-error text-sm">
+						<span>{ page.Error }</span>
+					</div>
+				}
+				<button type="submit" class="btn">Add</button>
+			</form>
 		</div>
 	}
 }
