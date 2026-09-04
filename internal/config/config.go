@@ -3,9 +3,16 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/rain/torrent"
+)
+
+const (
+	containerAPIHost  = "0.0.0.0"
+	containerDataDir  = "/data/downloads"
+	containerDatabase = "/data/session.db"
 )
 
 // Config holds all configuration for Fluxo
@@ -48,20 +55,31 @@ type TorrentConfig struct {
 	HealthCheckTimeout       time.Duration `mapstructure:"health-check-timeout"`
 }
 
-// DefaultConfig returns the default configuration
+// DefaultConfig returns the default configuration.
+// FLUXO_CONTAINER (set, and not 0/false/no/off) switches host-local defaults
+// to the container contract: listen on 0.0.0.0 and store state under /data.
+// More specific FLUXO_* / flags still win in Load.
 func DefaultConfig() *Config {
 	homeDir := getHomeDir()
+	apiHost := "127.0.0.1"
+	database := filepath.Join(homeDir, ".fluxo", "session.db")
+	dataDir := filepath.Join(homeDir, ".fluxo", "downloads")
+	if containerMode() {
+		apiHost = containerAPIHost
+		database = containerDatabase
+		dataDir = containerDataDir
+	}
 
 	return &Config{
 		APIPort:       8080,
-		APIHost:       "127.0.0.1",
+		APIHost:       apiHost,
 		Debug:         false,
 		DevMode:       false,
 		DevProxy:      "http://localhost:5173",
 		WatchInterval: 1 * time.Second,
 		Torrent: TorrentConfig{
-			Database:                 filepath.Join(homeDir, ".fluxo", "session.db"),
-			DataDir:                  filepath.Join(homeDir, ".fluxo", "downloads"),
+			Database:                 database,
+			DataDir:                  dataDir,
 			DataDirIncludesTorrentID: false,
 			PortBegin:                50000,
 			PortEnd:                  60000,
@@ -112,6 +130,15 @@ func (c *TorrentConfig) ToRainConfig() *torrent.Config {
 	config.HealthCheckInterval = c.HealthCheckInterval
 	config.HealthCheckTimeout = c.HealthCheckTimeout
 	return &config
+}
+
+func containerMode() bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("FLUXO_CONTAINER"))) {
+	case "", "0", "false", "no", "off":
+		return false
+	default:
+		return true
+	}
 }
 
 func getHomeDir() string {

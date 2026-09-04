@@ -1,0 +1,98 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+#
+# Archives (linux/darwin amd64/arm64) + GHCR image. No Homebrew / nfpm.
+
+version: 2
+project_name: fluxo
+
+before:
+  hooks:
+    - go mod tidy
+    - mise run web
+
+builds:
+  - id: fluxo
+    binary: fluxo
+    main: ./cmd/fluxo
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+dockers_v2:
+  - id: fluxo
+    ids:
+      - fluxo
+    dockerfile: Dockerfile
+    images:
+      - "ghcr.io/lewtec/{{ .ProjectName }}"
+    tags:
+      - "{{ .Version }}"
+      - latest
+    sbom: false
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      "org.opencontainers.image.created": "{{ .Date }}"
+      "org.opencontainers.image.name": "{{ .ProjectName }}"
+      "org.opencontainers.image.revision": "{{ .FullCommit }}"
+      "org.opencontainers.image.version": "{{ .Version }}"
+      "org.opencontainers.image.source": "{{ .GitURL }}"
+      "org.opencontainers.image.description": "BitTorrent client with GraphQL API and web UI"
+    flags:
+      - "--provenance=false"
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - Merge pull request
+      - Merge branch
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+release:
+  footer: >-
+
+    ---
+
+    **Container**
+
+    ```text
+    docker run --rm -p 8080:8080 -v fluxo-data:/data ghcr.io/lewtec/fluxo:{{ .Version }}
+    ```
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
