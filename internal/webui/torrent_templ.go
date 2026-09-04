@@ -97,7 +97,7 @@ func TorrentDetail(t TorrentView) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Back</a><div class=\"flex gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "Back</a><div id=\"torrent-detail-actions\" class=\"flex gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -175,7 +175,7 @@ func TorrentDetail(t TorrentView) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "Remove</button></form></div></div><div class=\"card bg-base-100 shadow-xl\"><div class=\"card-body\"><h2 class=\"card-title break-all\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "Remove</button></form></div></div><div id=\"torrent-detail-summary\" class=\"card bg-base-100 shadow-xl\"><div class=\"card-body\"><h2 class=\"card-title break-all\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -401,7 +401,7 @@ func TorrentDetail(t TorrentView) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div></div></div><div class=\"collapse collapse-arrow bg-base-100 shadow-md\"><input type=\"checkbox\"><div class=\"collapse-title text-xl font-medium flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div></div></div><div class=\"collapse collapse-arrow bg-base-100 shadow-md\"><input id=\"torrent-files-open\" type=\"checkbox\"><div id=\"torrent-files-title\" class=\"collapse-title text-xl font-medium flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -422,7 +422,7 @@ func TorrentDetail(t TorrentView) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, ")</div><div class=\"collapse-content\"><div class=\"overflow-x-auto\"><table class=\"table table-xs\"><thead><tr><th>Path</th><th>Size</th><th>Progress</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, ")</div><div class=\"collapse-content\"><div class=\"overflow-x-auto\"><table class=\"table table-xs\"><thead><tr><th>Path</th><th>Size</th><th>Progress</th></tr></thead> <tbody id=\"torrent-files-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -471,7 +471,7 @@ func TorrentDetail(t TorrentView) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</tbody></table></div></div></div><div class=\"collapse collapse-arrow bg-base-100 shadow-md\"><input type=\"checkbox\"><div class=\"collapse-title text-xl font-medium flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</tbody></table></div></div></div><div class=\"collapse collapse-arrow bg-base-100 shadow-md\"><input id=\"torrent-trackers-open\" type=\"checkbox\"><div id=\"torrent-trackers-title\" class=\"collapse-title text-xl font-medium flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -492,7 +492,7 @@ func TorrentDetail(t TorrentView) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, ")</div><div class=\"collapse-content\"><div class=\"overflow-x-auto\"><table class=\"table table-xs\"><thead><tr><th>URL</th><th>Status</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, ")</div><div class=\"collapse-content\"><div class=\"overflow-x-auto\"><table class=\"table table-xs\"><thead><tr><th>URL</th><th>Status</th></tr></thead> <tbody id=\"torrent-trackers-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
