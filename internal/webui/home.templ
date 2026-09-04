@@ -1,0 +1,65 @@
+package webui
+
+templ HomePage(stats SpeedStats, torrents []TorrentView) {
+	@Chrome("Fluxo", stats) {
+		<div class="space-y-4">
+			<div class="flex justify-between items-center mb-4">
+				<h1 class="text-2xl font-bold">Torrents</h1>
+			</div>
+			@TorrentList(torrents)
+		</div>
+	}
+}
+
+templ TorrentList(torrents []TorrentView) {
+	<div id="torrent-list">
+		if len(torrents) == 0 {
+			<div class="hero min-h-[50vh] bg-base-100 rounded-box shadow-xl">
+				<div class="hero-content text-center">
+					<div class="max-w-md">
+						<h2 class="text-3xl font-bold">No Torrents</h2>
+						<p class="py-6">Your download list is empty. Start by adding a new torrent.</p>
+						<a href="/add" class="btn btn-primary">Add Torrent</a>
+					</div>
+				</div>
+			</div>
+		} else {
+			<div class="grid grid-cols-1 gap-4">
+				for _, t := range torrents {
+					@TorrentCard(t)
+				}
+			</div>
+		}
+	</div>
+}
+
+templ TorrentCard(t TorrentView) {
+	<a href={ templ.SafeURL("/torrents/" + t.ID) } class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow border border-base-200">
+		<div class="card-body p-4 sm:p-6">
+			<div class="flex flex-col sm:flex-row justify-between gap-4">
+				<div class="flex-1 min-w-0">
+					<h3 class="card-title text-base sm:text-lg truncate mb-1" title={ t.Name }>{ t.Name }</h3>
+					<div class="flex flex-wrap gap-2 items-center text-xs sm:text-sm text-base-content/70">
+						<span class={ "badge badge-sm", t.StatusClass }>{ t.Status }</span>
+						<span>{ t.BytesDone } / { t.BytesTotal }</span>
+						<span class="hidden sm:inline">•</span>
+						<span>{ t.DownloadSpeed } ▼</span>
+						<span>{ t.UploadSpeed } ▲</span>
+						<span class="hidden sm:inline">•</span>
+						<span>ETA: { t.ETA }</span>
+					</div>
+				</div>
+			</div>
+			<progress class={ "progress w-full mt-4", t.ProgressClass } value={ formatProgress(t.Progress) } max="100"></progress>
+		</div>
+	</a>
+}
+
+templ NotFoundPage(stats SpeedStats) {
+	@Chrome("Torrent not found — Fluxo", stats) {
+		<div role="alert" class="alert alert-error">
+			<span>Torrent not found</span>
+			<a href="/" class="btn btn-sm">Go Back</a>
+		</div>
+	}
+}

@@ -1,0 +1,135 @@
+package webui
+
+templ TorrentPage(stats SpeedStats, t TorrentView) {
+	@Chrome(t.Name+" — Fluxo", stats) {
+		@TorrentDetail(t)
+	}
+}
+
+templ TorrentDetail(t TorrentView) {
+	<div id="torrent-detail" data-id={ t.ID } class="space-y-6">
+		<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+			<a href="/" class="btn btn-ghost btn-sm gap-2 pl-0">
+				@iconBack()
+				Back
+			</a>
+			<div class="flex gap-2">
+				if t.Stopped {
+					<form method="post" action={ templ.SafeURL("/torrents/" + t.ID + "/start") }>
+						<button type="submit" class="btn btn-sm btn-success">
+							@iconPlay()
+							Start
+						</button>
+					</form>
+				} else {
+					<form method="post" action={ templ.SafeURL("/torrents/" + t.ID + "/stop") }>
+						<button type="submit" class="btn btn-sm btn-warning">
+							@iconStop()
+							Stop
+						</button>
+					</form>
+				}
+				<form method="post" action={ templ.SafeURL("/torrents/" + t.ID + "/remove") } onsubmit="return confirm('Are you sure you want to remove this torrent?')">
+					<button type="submit" class="btn btn-sm btn-error">
+						@iconTrash()
+						Remove
+					</button>
+				</form>
+			</div>
+		</div>
+		<div class="card bg-base-100 shadow-xl">
+			<div class="card-body">
+				<h2 class="card-title break-all">{ t.Name }</h2>
+				<span class={ "badge badge-lg", t.StatusClass }>{ t.Status }</span>
+				<div class="py-4 space-y-2">
+					<div class="flex justify-between text-sm">
+						<span>{ t.BytesDone } / { t.BytesTotal }</span>
+						<span>{ formatProgress(t.Progress) }%</span>
+					</div>
+					<progress class={ "progress w-full", t.ProgressClass } value={ formatProgress(t.Progress) } max="100"></progress>
+				</div>
+				<div class="stats stats-vertical md:stats-horizontal w-full bg-base-200">
+					<div class="stat">
+						<div class="stat-title">Download Speed</div>
+						<div class="stat-value text-lg">{ t.DownloadSpeed }</div>
+					</div>
+					<div class="stat">
+						<div class="stat-title">Upload Speed</div>
+						<div class="stat-value text-lg">{ t.UploadSpeed }</div>
+					</div>
+					<div class="stat">
+						<div class="stat-title">Peers</div>
+						<div class="stat-value text-lg">{ fmtInt(t.PeersTotal) } ({ fmtInt(t.PeersIn) } in / { fmtInt(t.PeersOut) } out)</div>
+					</div>
+					<div class="stat">
+						<div class="stat-title">ETA</div>
+						<div class="stat-value text-lg">{ t.ETA }</div>
+					</div>
+				</div>
+				<div class="divider">Details</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs opacity-70">
+					<div><span class="font-bold">Hash:</span> { t.InfoHash }</div>
+					<div><span class="font-bold">Added:</span> { t.AddedAt }</div>
+				</div>
+			</div>
+		</div>
+		<div class="collapse collapse-arrow bg-base-100 shadow-md">
+			<input type="checkbox"/>
+			<div class="collapse-title text-xl font-medium flex items-center gap-2">
+				@iconFile()
+				Files ({ fmtInt(len(t.Files)) })
+			</div>
+			<div class="collapse-content">
+				<div class="overflow-x-auto">
+					<table class="table table-xs">
+						<thead>
+							<tr>
+								<th>Path</th>
+								<th>Size</th>
+								<th>Progress</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, f := range t.Files {
+								<tr>
+									<td class="break-all">{ f.Path }</td>
+									<td class="whitespace-nowrap">{ f.Size }</td>
+									<td class="w-24">
+										<progress class="progress progress-xs w-full" value={ formatProgress(f.Progress) } max="100"></progress>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="collapse collapse-arrow bg-base-100 shadow-md">
+			<input type="checkbox"/>
+			<div class="collapse-title text-xl font-medium flex items-center gap-2">
+				@iconGlobe()
+				Trackers ({ fmtInt(len(t.Trackers)) })
+			</div>
+			<div class="collapse-content">
+				<div class="overflow-x-auto">
+					<table class="table table-xs">
+						<thead>
+							<tr>
+								<th>URL</th>
+								<th>Status</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, tr := range t.Trackers {
+								<tr>
+									<td class="break-all">{ tr.URL }</td>
+									<td><span class="badge badge-xs badge-ghost">{ tr.Status }</span></td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+}

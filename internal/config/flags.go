@@ -18,8 +18,8 @@ func AddFlags(cmd *cobra.Command) {
 	flags.Int("api-port", defaults.APIPort, "API server port")
 	flags.String("api-host", defaults.APIHost, "API server host")
 	flags.Bool("debug", defaults.Debug, "enable debug logging")
-	flags.Bool("dev-mode", defaults.DevMode, "development mode (proxy to Vite)")
-	flags.String("dev-proxy", defaults.DevProxy, "Vite dev server URL")
+	flags.Bool("dev-mode", defaults.DevMode, "disable static-asset caching")
+	flags.String("dev-proxy", defaults.DevProxy, "deprecated: ignored")
 
 	// Watcher settings
 	flags.Duration("watch-interval", defaults.WatchInterval, "torrent watch interval")

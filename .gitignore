@@ -34,10 +34,6 @@ Thumbs.db
 
 # Frontend
 web/node_modules/
-web/dist/*
-!web/dist/.gitkeep
-web/.vite/
-web/__generated__/
 
 # Data
 *.db

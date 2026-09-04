@@ -2,39 +2,12 @@
   "name": "fluxo-web",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "relay": "relay-compiler"
-  },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.1.17",
-    "buffer": "^6.0.3",
-    "graphql": "^16.12.0",
-    "graphql-ws": "^6.0.6",
-    "lucide-react": "^0.555.0",
-    "parse-torrent": "^11.0.19",
-    "path-browserify": "^1.0.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-relay": "^20.1.1",
-    "react-router-dom": "^7.9.6",
-    "relay-runtime": "^20.1.1"
+    "build": "tailwindcss -i ./src/input.css -o ./static/css/app.css --minify"
   },
   "devDependencies": {
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@types/react-relay": "^18.2.1",
-    "@types/relay-runtime": "^19.0.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "babel-plugin-relay": "^20.1.1",
+    "@tailwindcss/cli": "^4.1.17",
     "daisyui": "^5.5.5",
-    "relay-compiler": "^20.1.1",
-    "tailwindcss": "^4.1.17",
-    "typescript": "^5.9.3",
-    "vite": "^7.2.6",
-    "vite-plugin-relay": "^2.1.0"
+    "tailwindcss": "^4.1.17"
   }
 }

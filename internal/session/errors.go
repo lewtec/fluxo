@@ -10,6 +10,7 @@ func (e sessionError) Error() string { return string(e) }
 const (
 	ErrTorrentNotFound      sessionError = "torrent not found"
 	ErrInvalidURI           sessionError = "invalid torrent URI"
+	ErrInvalidTorrent       sessionError = "invalid torrent file"
 	ErrNoLocalIP            sessionError = "no suitable local IP found"
 	ErrUPNPDiscoveryTimeout sessionError = "timeout waiting for UPnP discovery"
 	ErrNoUPNPClients        sessionError = "no UPnP clients available"
