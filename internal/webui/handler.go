@@ -25,15 +25,13 @@ var (
 type Handler struct {
 	manager *session.Manager
 	static  http.Handler
-	devMode bool
 }
 
 // New returns a Handler that serves pages from manager and files from staticFS.
-func New(manager *session.Manager, staticFS fs.FS, devMode bool) *Handler {
+func New(manager *session.Manager, staticFS fs.FS) *Handler {
 	return &Handler{
 		manager: manager,
 		static:  http.FileServer(http.FS(staticFS)),
-		devMode: devMode,
 	}
 }
 
@@ -47,21 +45,11 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /torrents/{id}/stop", h.stop)
 	mux.HandleFunc("POST /torrents/{id}/remove", h.remove)
 	mux.HandleFunc("GET /events", h.events)
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.HandlerFunc(h.serveStatic)))
-}
-
-func (h *Handler) serveStatic(w http.ResponseWriter, r *http.Request) {
-	if h.devMode {
-		w.Header().Set("Cache-Control", "no-store")
-	}
-	h.static.ServeHTTP(w, r)
+	mux.Handle("GET /static/", http.StripPrefix("/static/", h.static))
 }
 
 func (h *Handler) render(w http.ResponseWriter, r *http.Request, status int, n templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if h.devMode {
-		w.Header().Set("Cache-Control", "no-store")
-	}
 	w.WriteHeader(status)
 	if err := n.Render(r.Context(), w); err != nil {
 		log.Printf("render: %v", err)

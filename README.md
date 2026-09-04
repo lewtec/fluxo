@@ -62,7 +62,7 @@ go build -o fluxo ./cmd/fluxo
 
 Then open `http://127.0.0.1:8080`.
 
-`--dev-mode` turns off static-asset caching. `--dev-proxy` is ignored.
+`--dev-mode` and `--dev-proxy` are ignored leftovers from the Vite SPA.
 
 ## Configuration
 

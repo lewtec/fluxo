@@ -44,7 +44,7 @@ func (l *HTTPListener) Start(ctx context.Context) error {
 	}
 
 	mux := http.NewServeMux()
-	ui := webui.New(l.manager, staticFS, l.config.DevMode)
+	ui := webui.New(l.manager, staticFS)
 	ui.Register(mux)
 
 	// SSE streams stay open. A WriteTimeout would abort them mid-stream;
