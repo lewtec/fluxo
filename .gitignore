@@ -35,6 +35,9 @@ Thumbs.db
 # Frontend
 web/node_modules/
 
+# Impeccable working files
+.impeccable/
+
 # Data
 *.db
 downloads/

@@ -1,7 +1,7 @@
 const THEME_KEY = "fluxo-theme";
 
 function currentTheme() {
-  return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  return document.documentElement.getAttribute("data-theme") === "listing" ? "listing" : "bay";
 }
 
 function persistTheme(theme) {
@@ -65,9 +65,9 @@ function connectEvents() {
 function bindTheme() {
   const box = document.getElementById("theme-toggle");
   if (!box) return;
-  box.checked = currentTheme() === "light";
+  box.checked = currentTheme() === "listing";
   box.addEventListener("change", () => {
-    persistTheme(box.checked ? "light" : "dark");
+    persistTheme(box.checked ? "listing" : "bay");
   });
 }
 

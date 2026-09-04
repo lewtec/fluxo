@@ -73,11 +73,14 @@ func TestMapStatusAndClass(t *testing.T) {
 	if got := mapStatus(torrent.Seeding); got != "Seeding" {
 		t.Errorf("mapStatus(Seeding) = %q, want Seeding", got)
 	}
-	if got := statusClass(torrent.Seeding, false); got != "badge-success" {
-		t.Errorf("statusClass(Seeding) = %q, want badge-success", got)
+	if got := statusClass(torrent.Seeding, false); got != "text-success" {
+		t.Errorf("statusClass(Seeding) = %q, want text-success", got)
 	}
-	if got := statusClass(torrent.Downloading, true); got != "badge-error" {
-		t.Errorf("statusClass(err) = %q, want badge-error", got)
+	if got := statusClass(torrent.Downloading, true); got != "text-error" {
+		t.Errorf("statusClass(err) = %q, want text-error", got)
+	}
+	if got := statusCode(torrent.Seeding); got != "SEED" {
+		t.Errorf("statusCode(Seeding) = %q, want SEED", got)
 	}
 	if got := mapTrackerStatus(torrent.Working, false); got != "Waiting" {
 		t.Errorf("mapTrackerStatus(Working) = %q, want Waiting", got)

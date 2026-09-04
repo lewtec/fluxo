@@ -7,76 +7,70 @@ templ TorrentPage(stats SpeedStats, t TorrentView) {
 }
 
 templ TorrentDetail(t TorrentView) {
-	<div id="torrent-detail" data-id={ t.ID } class="space-y-6">
-		<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-			<a href="/" class="btn btn-ghost btn-sm gap-2 pl-0">
-				@iconBack()
-				Back
-			</a>
-			<div id="torrent-detail-actions" class="flex gap-2">
+	<div id="torrent-detail" data-id={ t.ID } class="space-y-4">
+		<div class="flex flex-wrap items-center justify-between gap-2">
+			<a href="/" class="link">← list</a>
+			<div id="torrent-detail-actions" class="flex gap-3">
 				if t.Stopped {
 					<form method="post" action={ templ.SafeURL("/torrents/" + t.ID + "/start") }>
-						<button type="submit" class="btn btn-sm btn-success">
-							@iconPlay()
-							Start
-						</button>
+						<button type="submit" class="link">Start</button>
 					</form>
 				} else {
 					<form method="post" action={ templ.SafeURL("/torrents/" + t.ID + "/stop") }>
-						<button type="submit" class="btn btn-sm btn-warning">
-							@iconStop()
-							Stop
-						</button>
+						<button type="submit" class="link">Stop</button>
 					</form>
 				}
-				<form method="post" action={ templ.SafeURL("/torrents/" + t.ID + "/remove") } onsubmit="return confirm('Are you sure you want to remove this torrent?')">
-					<button type="submit" class="btn btn-sm btn-error">
-						@iconTrash()
-						Remove
-					</button>
+				<form method="post" action={ templ.SafeURL("/torrents/" + t.ID + "/remove") } onsubmit="return confirm('Remove this torrent?')">
+					<button type="submit" class="link text-error">Remove</button>
 				</form>
 			</div>
 		</div>
-		<div id="torrent-detail-summary" class="card bg-base-100 shadow-xl">
-			<div class="card-body">
-				<h2 class="card-title break-all">{ t.Name }</h2>
-				<span class={ "badge badge-lg", t.StatusClass }>{ t.Status }</span>
-				<div class="py-4 space-y-2">
-					<div class="flex justify-between text-sm">
-						<span>{ t.BytesDone } / { t.BytesTotal }</span>
-						<span>{ formatProgress(t.Progress) }%</span>
-					</div>
-					<progress class={ "progress w-full", t.ProgressClass } value={ formatProgress(t.Progress) } max="100"></progress>
-				</div>
-				<div class="stats stats-vertical md:stats-horizontal w-full bg-base-200">
-					<div class="stat">
-						<div class="stat-title">Download Speed</div>
-						<div class="stat-value text-lg">{ t.DownloadSpeed }</div>
-					</div>
-					<div class="stat">
-						<div class="stat-title">Upload Speed</div>
-						<div class="stat-value text-lg">{ t.UploadSpeed }</div>
-					</div>
-					<div class="stat">
-						<div class="stat-title">Peers</div>
-						<div class="stat-value text-lg">{ fmtInt(t.PeersTotal) } ({ fmtInt(t.PeersIn) } in / { fmtInt(t.PeersOut) } out)</div>
-					</div>
-					<div class="stat">
-						<div class="stat-title">ETA</div>
-						<div class="stat-value text-lg">{ t.ETA }</div>
-					</div>
-				</div>
-				<div class="divider">Details</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs opacity-70">
-					<div><span class="font-bold">Hash:</span> { t.InfoHash }</div>
-					<div><span class="font-bold">Added:</span> { t.AddedAt }</div>
-				</div>
+		<div id="torrent-detail-summary">
+			<h1 class="text-lg font-bold break-all mb-2">{ t.Name }</h1>
+			<div class="overflow-x-auto">
+				<table class="table table-sm">
+					<tbody>
+						<tr>
+							<th class="w-32">Status</th>
+							<td class={ t.StatusClass }>{ t.StatusCode } — { t.Status }</td>
+						</tr>
+						<tr>
+							<th>Size</th>
+							<td>{ t.BytesDone } / { t.BytesTotal } ({ formatProgress(t.Progress) }%)</td>
+						</tr>
+						<tr>
+							<th></th>
+							<td>
+								<progress class={ "progress w-full max-w-md", t.ProgressClass } value={ formatProgress(t.Progress) } max="100"></progress>
+							</td>
+						</tr>
+						<tr>
+							<th>↓ / ↑</th>
+							<td class="tabular-nums">{ t.DownloadSpeed } / { t.UploadSpeed }</td>
+						</tr>
+						<tr>
+							<th>Peers</th>
+							<td>{ fmtInt(t.PeersTotal) } ({ fmtInt(t.PeersIn) } in / { fmtInt(t.PeersOut) } out)</td>
+						</tr>
+						<tr>
+							<th>ETA</th>
+							<td>{ t.ETA }</td>
+						</tr>
+						<tr>
+							<th>Hash</th>
+							<td class="font-mono text-xs break-all">{ t.InfoHash }</td>
+						</tr>
+						<tr>
+							<th>Added</th>
+							<td>{ t.AddedAt }</td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 		</div>
-		<div class="collapse collapse-arrow bg-base-100 shadow-md">
+		<div class="collapse collapse-arrow border border-base-300">
 			<input id="torrent-files-open" type="checkbox"/>
-			<div id="torrent-files-title" class="collapse-title text-xl font-medium flex items-center gap-2">
-				@iconFile()
+			<div id="torrent-files-title" class="collapse-title font-bold">
 				Files ({ fmtInt(len(t.Files)) })
 			</div>
 			<div class="collapse-content">
@@ -86,7 +80,7 @@ templ TorrentDetail(t TorrentView) {
 							<tr>
 								<th>Path</th>
 								<th>Size</th>
-								<th>Progress</th>
+								<th>Done</th>
 							</tr>
 						</thead>
 						<tbody id="torrent-files-body">
@@ -94,7 +88,7 @@ templ TorrentDetail(t TorrentView) {
 								<tr>
 									<td class="break-all">{ f.Path }</td>
 									<td class="whitespace-nowrap">{ f.Size }</td>
-									<td class="w-24">
+									<td class="w-28">
 										<progress class="progress progress-xs w-full" value={ formatProgress(f.Progress) } max="100"></progress>
 									</td>
 								</tr>
@@ -104,10 +98,9 @@ templ TorrentDetail(t TorrentView) {
 				</div>
 			</div>
 		</div>
-		<div class="collapse collapse-arrow bg-base-100 shadow-md">
+		<div class="collapse collapse-arrow border border-base-300">
 			<input id="torrent-trackers-open" type="checkbox"/>
-			<div id="torrent-trackers-title" class="collapse-title text-xl font-medium flex items-center gap-2">
-				@iconGlobe()
+			<div id="torrent-trackers-title" class="collapse-title font-bold">
 				Trackers ({ fmtInt(len(t.Trackers)) })
 			</div>
 			<div class="collapse-content">
@@ -123,7 +116,7 @@ templ TorrentDetail(t TorrentView) {
 							for _, tr := range t.Trackers {
 								<tr>
 									<td class="break-all">{ tr.URL }</td>
-									<td><span class="badge badge-xs badge-ghost">{ tr.Status }</span></td>
+									<td>{ tr.Status }</td>
 								</tr>
 							}
 						</tbody>
