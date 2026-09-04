@@ -31,9 +31,7 @@ func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "fluxo",
 		Version: version,
-		Short:   "Fluxo - Modern BitTorrent client with web UI",
-		Long: `Fluxo is a modern BitTorrent client built with Go.
-It serves a templ web UI with server-sent events for live torrent updates.`,
+		Short:   "BitTorrent client with a web UI",
 		RunE: runServer,
 	}
 
