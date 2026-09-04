@@ -4,9 +4,14 @@ node = "24"
 goreleaser = "2.17.0"
 svu = "3.3.0"
 
+[tasks.generate]
+description = "Run go generate"
+run = "go generate ./..."
+
 [tasks.web]
 description = "Compile Tailwind CSS and generate templ"
-run = "npm --prefix web ci && npm --prefix web run build && go generate ./internal/webui"
+depends = ["generate"]
+run = "npm --prefix web ci && npm --prefix web run build"
 
 [tasks.install]
 description = "Download Go module deps"
@@ -14,6 +19,7 @@ run = "go mod download"
 
 [tasks.fmt]
 description = "Format Go packages"
+depends = ["generate"]
 run = "go fmt ./..."
 
 [tasks.lint]
@@ -30,7 +36,7 @@ depends = ["web"]
 run = "go build -o fluxo ./cmd/fluxo"
 
 [tasks.ci]
-description = "Web, format, vet, test, build"
+description = "Generate, format, vet, test, build"
 depends = ["web", "fmt", "lint", "test", "build"]
 
 [tasks."release:check"]
