@@ -13,7 +13,7 @@ templ TorrentDetail(t TorrentView) {
 				@iconBack()
 				Back
 			</a>
-			<div class="flex gap-2">
+			<div id="torrent-detail-actions" class="flex gap-2">
 				if t.Stopped {
 					<form method="post" action={ templ.SafeURL("/torrents/" + t.ID + "/start") }>
 						<button type="submit" class="btn btn-sm btn-success">
@@ -37,7 +37,7 @@ templ TorrentDetail(t TorrentView) {
 				</form>
 			</div>
 		</div>
-		<div class="card bg-base-100 shadow-xl">
+		<div id="torrent-detail-summary" class="card bg-base-100 shadow-xl">
 			<div class="card-body">
 				<h2 class="card-title break-all">{ t.Name }</h2>
 				<span class={ "badge badge-lg", t.StatusClass }>{ t.Status }</span>
@@ -74,8 +74,8 @@ templ TorrentDetail(t TorrentView) {
 			</div>
 		</div>
 		<div class="collapse collapse-arrow bg-base-100 shadow-md">
-			<input type="checkbox"/>
-			<div class="collapse-title text-xl font-medium flex items-center gap-2">
+			<input id="torrent-files-open" type="checkbox"/>
+			<div id="torrent-files-title" class="collapse-title text-xl font-medium flex items-center gap-2">
 				@iconFile()
 				Files ({ fmtInt(len(t.Files)) })
 			</div>
@@ -89,7 +89,7 @@ templ TorrentDetail(t TorrentView) {
 								<th>Progress</th>
 							</tr>
 						</thead>
-						<tbody>
+						<tbody id="torrent-files-body">
 							for _, f := range t.Files {
 								<tr>
 									<td class="break-all">{ f.Path }</td>
@@ -105,8 +105,8 @@ templ TorrentDetail(t TorrentView) {
 			</div>
 		</div>
 		<div class="collapse collapse-arrow bg-base-100 shadow-md">
-			<input type="checkbox"/>
-			<div class="collapse-title text-xl font-medium flex items-center gap-2">
+			<input id="torrent-trackers-open" type="checkbox"/>
+			<div id="torrent-trackers-title" class="collapse-title text-xl font-medium flex items-center gap-2">
 				@iconGlobe()
 				Trackers ({ fmtInt(len(t.Trackers)) })
 			</div>
@@ -119,7 +119,7 @@ templ TorrentDetail(t TorrentView) {
 								<th>Status</th>
 							</tr>
 						</thead>
-						<tbody>
+						<tbody id="torrent-trackers-body">
 							for _, tr := range t.Trackers {
 								<tr>
 									<td class="break-all">{ tr.URL }</td>
