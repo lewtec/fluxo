@@ -15,6 +15,9 @@ import (
 	"github.com/lucasew/fluxo/internal/server"
 )
 
+// Set via goreleaser ldflags: -X main.version={{ .Version }}
+var version = "dev"
+
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -26,8 +29,9 @@ func main() {
 
 func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fluxo",
-		Short: "Fluxo - Modern BitTorrent client with web UI",
+		Use:     "fluxo",
+		Version: version,
+		Short:   "Fluxo - Modern BitTorrent client with web UI",
 		Long: `Fluxo is a modern BitTorrent client built with Go.
 It serves a templ web UI with server-sent events for live torrent updates.`,
 		RunE: runServer,
