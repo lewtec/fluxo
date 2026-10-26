@@ -27,7 +27,11 @@ func AddFlags(cmd *cobra.Command) {
 	// Rain/Torrent settings
 	flags.String("database", defaults.Torrent.Database, "path to session database")
 	flags.String("data-dir", defaults.Torrent.DataDir, "path to downloads directory")
-	flags.Bool("data-dir-includes-torrent-id", defaults.Torrent.DataDirIncludesTorrentID, "include torrent ID in data directory path")
+	flags.Bool(
+		"data-dir-includes-torrent-id",
+		defaults.Torrent.DataDirIncludesTorrentID,
+		"include torrent ID in data directory path",
+	)
 	flags.Uint16("port-begin", defaults.Torrent.PortBegin, "beginning of port range for incoming connections")
 	flags.Uint16("port-end", defaults.Torrent.PortEnd, "end of port range for incoming connections")
 	flags.Bool("dht-enabled", defaults.Torrent.DHTEnabled, "enable DHT")
