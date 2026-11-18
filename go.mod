@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/a-h/templ v0.3.1020
 	github.com/cenkalti/rain v1.13.0
-	github.com/huin/goupnp v1.3.0
+	github.com/huin/goupnp v1.3.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 )
